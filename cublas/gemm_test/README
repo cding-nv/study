@@ -1,0 +1,2 @@
+cd Gemm
+python test.py

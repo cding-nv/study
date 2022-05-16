@@ -1,0 +1,13 @@
+>>> import PIL
+>>> from PIL import Image
+>>> import numpy as np
+
+>>> z=np.array([124, 117, 104])               
+>>> z=np.expand_dims(np.expand_dims(np.array([124, 117, 104]), axis=0), axis=0)
+>>> z=np.broadcast_to(z, (224, 224, 3))
+>>> z.shape
+(224, 224, 3)
+
+>>> Image.fromarray(np.array(z, dtype=np.uint8))
+<PIL.Image.Image image mode=RGB size=224x224 at 0x7F4EABA02A90>
+>>> Image.fromarray(np.array(z, dtype=np.uint8)).save('/home/cding/x.ppm')

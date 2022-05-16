@@ -1,0 +1,6 @@
+gcc -fPIC wrapper.c -o example.so -shared -I /usr/include/python2.7/ -I /usr/lib/python2.7/config-x86_64-linux-gnu/
+
+python
+import example
+example.fact(4)
+

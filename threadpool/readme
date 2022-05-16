@@ -1,0 +1,1 @@
+g++ ex3.cpp -o ex3 -std=c++11 -lpthread

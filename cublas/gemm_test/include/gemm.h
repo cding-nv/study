@@ -1,0 +1,235 @@
+#pragma once
+#include <cublas_v2.h>
+#include <cuda_fp16.h>
+
+
+// C-style FP32 gemm
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int m,
+      int n,
+      int k,
+      const float* A,
+      const float* B,
+      float* C,
+      const float alpha = 1.f,
+      const float beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT) {
+    return cublasGemmEx(handle,
+                        transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        n,
+                        m,
+                        k,
+                        &alpha,
+                        B,
+                        CUDA_R_32F,
+                        transB ? k : n,
+                        A,
+                        CUDA_R_32F,
+                        transA ? m : k,
+                        &beta,
+                        C,
+                        CUDA_R_32F,
+                        n,
+                        CUDA_R_32F,
+                        algo);
+}
+
+
+// C-style FP16 gemm
+#ifdef _FAST
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int m,
+      int n,
+      int k,
+      const __half* A,
+      const __half* B,
+      __half* C,
+      const __half alpha = 1.f,
+      const __half beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT_TENSOR_OP) {
+    return cublasGemmEx(handle,
+                        transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        n,
+                        m,
+                        k,
+                        &alpha,
+                        B,
+                        CUDA_R_16F,
+                        transB ? k : n,
+                        A,
+                        CUDA_R_16F,
+                        transA ? m : k,
+                        &beta,
+                        C,
+                        CUDA_R_16F,
+                        n,
+                        CUDA_R_16F,
+                        algo);
+}
+#else
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int m,
+      int n,
+      int k,
+      const __half* A,
+      const __half* B,
+      __half* C,
+      const float alpha = 1.f,
+      const float beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT_TENSOR_OP) {
+    return cublasGemmEx(handle,
+                        transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                        n,
+                        m,
+                        k,
+                        &alpha,
+                        B,
+                        CUDA_R_16F,
+                        transB ? k : n,
+                        A,
+                        CUDA_R_16F,
+                        transA ? m : k,
+                        &beta,
+                        C,
+                        CUDA_R_16F,
+                        n,
+                        CUDA_R_32F,
+                        algo);
+}
+#endif
+
+
+// C-style FP32 strided batched gemm
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int batchCnt,
+      int m,
+      int n,
+      int k,
+      const float* A,
+      const float* B,
+      float* C,
+      const float alpha = 1.f,
+      const float beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT) {
+    return cublasGemmStridedBatchedEx(handle,
+                                      transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      n,
+                                      m,
+                                      k,
+                                      &alpha,
+                                      B,
+                                      CUDA_R_32F,
+                                      transB ? k : n,
+                                      n * k,
+                                      A,
+                                      CUDA_R_32F,
+                                      transA ? m : k,
+                                      k * m,
+                                      &beta,
+                                      C,
+                                      CUDA_R_32F,
+                                      n,
+                                      n * m,
+                                      batchCnt,
+                                      CUDA_R_32F,
+                                      algo);
+}
+
+
+// C-style FP16 strided batched gemm
+#ifdef _FAST
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int batchCnt,
+      int m,
+      int n,
+      int k,
+      const __half* A,
+      const __half* B,
+      __half* C,
+      const __half alpha = 1.f,
+      const __half beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT_TENSOR_OP) {
+    return cublasGemmStridedBatchedEx(handle,
+                                      transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      n,
+                                      m,
+                                      k,
+                                      &alpha,
+                                      B,
+                                      CUDA_R_16F,
+                                      transB ? k : n,
+                                      n * k,
+                                      A,
+                                      CUDA_R_16F,
+                                      transA ? m : k,
+                                      k * m,
+                                      &beta,
+                                      C,
+                                      CUDA_R_16F,
+                                      n,
+                                      n * m,
+                                      batchCnt,
+                                      CUDA_R_16F,
+                                      algo);
+}
+#else
+inline cublasStatus_t
+gemmC(cublasHandle_t handle,
+      bool transA,
+      bool transB,
+      int batchCnt,
+      int m,
+      int n,
+      int k,
+      const __half* A,
+      const __half* B,
+      __half* C,
+      const float alpha = 1.f,
+      const float beta = 0.f,
+      cublasGemmAlgo_t algo = CUBLAS_GEMM_DEFAULT_TENSOR_OP) {
+    return cublasGemmStridedBatchedEx(handle,
+                                      transB ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      transA ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                      n,
+                                      m,
+                                      k,
+                                      &alpha,
+                                      B,
+                                      CUDA_R_16F,
+                                      transB ? k : n,
+                                      n * k,
+                                      A,
+                                      CUDA_R_16F,
+                                      transA ? m : k,
+                                      k * m,
+                                      &beta,
+                                      C,
+                                      CUDA_R_16F,
+                                      n,
+                                      n * m,
+                                      batchCnt,
+                                      CUDA_R_32F,
+                                      algo);
+}
+#endif
+
