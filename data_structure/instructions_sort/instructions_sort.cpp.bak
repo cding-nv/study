@@ -1,0 +1,112 @@
+#include <iostream>
+#include <algorithm>
+#include <stdio.h>
+
+using namespace std;
+
+#define N 3
+
+//
+int find_i(int ar[], int n, int element)
+{
+	int i = 0;
+	int index=-1;
+	for (i = 0; i <n; i++)
+	{
+		if (element ==ar[i])
+		{
+			index=i;
+		}
+	}
+	return index;
+}
+
+int main ()
+{   
+    //int n = N;
+    int instructions[N] = {1,2,3};
+    for (int i = 0; i < N; i++) {
+        instructions[i] = i+1;
+    }
+
+    // Relationship set
+    int relate_set[N+1][N+1] = {0};
+    relate_set[1][3] = 1;
+    relate_set[2][3] = 2;
+    
+    int cost = 0xffff;
+    int min_cost_order[N] = {0};
+
+    do {
+        cout << instructions[0] << ' ' << instructions[1] << ' ' << instructions[2] <<'\n';
+        
+        bool flag_valid = true;
+        
+        for (int i = 1; i < N+1; i++) {
+            for (int j = 1; j < N+1; j++) {
+                //cout << "    i j " << i << " " << j << endl;
+                if (relate_set[i][j] > 0) {
+                    cout << "    relate_set[" << i << "][" << j << "] = " << relate_set[i][j] << endl;
+                    int* position_i = find(instructions, instructions + N - 1, i);
+                    int* position_j = find(instructions, instructions + N - 1, j);
+                    if (position_i > position_j) {
+                        flag_valid = false;
+                        cout << "    " << instructions[0] << " " << instructions[1] << " " << instructions[2] << " is false" << endl;
+                        break;
+                    }
+                }
+            }
+            if (flag_valid == false) break;
+        }
+        if (flag_valid) {
+            int temp_cost = 0;
+            // Insert stall cycle.
+            int temp_instr[128] = {0}; 
+            for (int i = 0; i < N; i++) {
+                temp_instr[i] = instructions[i];
+            }
+            // Only count waiting cycles and save in temp_cost
+            for (int i = 1; i < N+1; i++)
+                for (int j = 0; j < N+1; j++) {
+                    if (relate_set[i][j] > 0) {
+                        printf("   : [%d][%d]\n", i, j);
+                        printf("   : %d, %d, %d, %d, %d\n", temp_instr[0], temp_instr[1], temp_instr[2], temp_instr[3], temp_instr[4]);
+                        int index_i = find_i(temp_instr, N+temp_cost, i);
+                        int index_j = find_i(temp_instr, N+temp_cost, j);
+                        printf("     index_i, index_j %d  %d  %d \n", index_i, index_j, index_j - index_i);
+                        int distance = index_j - index_i - 1;
+                        printf("    %d %d distance = %d\n", i, j, distance);
+
+                        if (relate_set[i][j] - distance > 0) {
+                            temp_cost += relate_set[i][j] - distance;
+                            
+                            // Rear shift from j and insert bank cycle before j.
+                            for (int k = N + temp_cost; k > j - 1; k--) {
+                                temp_instr[k] = temp_instr[k-1];
+                            }
+                            temp_instr[j-1] = 0;
+                            printf("   :: %d, %d, %d, %d, %d\n", temp_instr[0], temp_instr[1], temp_instr[2], temp_instr[3], temp_instr[4]);
+                        } 
+                        
+                        
+                    }
+            }
+            cout << "  temp_cost = " << temp_cost << endl;
+            if (temp_cost < cost) {
+                cost = temp_cost;
+                cout << "  cost = " << cost << endl;
+                for (int i = 0; i < N; i++) {
+                    min_cost_order[i] = instructions[i];
+                }
+            }
+        }
+    } while ( next_permutation(instructions , instructions + N) );
+    
+    cout << "min_cost_order " << endl;
+    for (int i = 0; i < N; i++) {
+        cout << " " << min_cost_order[i];
+    }
+    cout << endl;
+ 
+    return 0;
+}

@@ -1,0 +1,34 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.16)
+PROJECT(OODNLibKernel CUDA CXX)
+
+# release  debug
+SET(CMAKE_BUILD_TYPE release)
+
+#===============================================================================
+FIND_PACKAGE(CUDA REQUIRED)
+
+SET(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -fPIC")
+SET(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -g")
+SET(CUDA_NVCC_FLAGS -O3;-use_fast_math)
+SET(CUDA_NVCC_FLAGS_DEBUG -D_DEBUG;-g;-G)
+
+INCLUDE_DIRECTORIES(include)
+FILE(GLOB_RECURSE SRC_LIST kernel/*.cu)
+SET(LIB_HEAD include/BertEncoderInfer.h;include/BertPoolerInfer.h)
+# SET(LIB_HEAD ${LIB_HEAD};include/MMSelfAttnInferGL.h;include/MMSelfAttnInferL.h)
+SET(LIB_HEAD ${LIB_HEAD};include/AdjMatrixBatch.h)
+# SET(LIB_HEAD ${LIB_HEAD};include/BatchingSequence.h)
+# SET(LIB_HEAD ${LIB_HEAD};include/PositionsAndTimeDiff.h)
+# SET(LIB_HEAD ${LIB_HEAD};include/RecoverSequenceInfer.h)
+
+FOREACH(SM 60 61 70 75)
+    SET(GENCODE ${GENCODE} -gencode=arch=compute_${SM},code=sm_${SM})
+ENDFOREACH()
+
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+SET(LIBRARY_NAME ${PROJECT_NAME})
+CUDA_ADD_LIBRARY(${LIBRARY_NAME} SHARED ${SRC_LIST} OPTIONS ${GENCODE})
+SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES CXX_STANDARD 14)
+SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES DEBUG_POSTFIX D)
+FILE(COPY ${LIB_HEAD} DESTINATION ${LIBRARY_OUTPUT_PATH})
+

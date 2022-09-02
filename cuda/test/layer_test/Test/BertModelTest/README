@@ -1,0 +1,7 @@
+cd OODNLib
+python setup.py install
+
+
+cd BertModelTest
+python test_train_Ox_pre_000.py  nlp_base_fp16_bsz128  output
+python test_train_Ox_pre_000.py  nlp_base_fp32_bsz064  output

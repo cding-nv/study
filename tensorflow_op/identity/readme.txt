@@ -1,0 +1,5 @@
+tf.identity is useful when you want to explicitly transport tensor between devices (like, from GPU to a CPU). The op adds send/recv nodes to the graph, which make a copy when the devices of the input and the output are different
+
+A default behavior is that the send/recv nodes are added implicitly when the operation happens on a different device but you can imagine some situations (especially in a multi-threaded/distributed settings) when it might be useful to fetch the value of the variable multiple times within a single execution of the session.run. tf.identity allows for more control with regard to when the value should be read from the source device. Possibly a more appropriate name for this op would be read.
+
+Also, please note that in the implementation of tf.Variable link, the identity op is added in the constructor, which makes sure that all the accesses to the variable copy the data from the source only once. Multiple copies can be expensive in cases when the variable lives on a GPU but it is read by multiple CPU ops (or the other way around). Users can change the behavior with multiple calls to tf.identity when desired.

@@ -1,0 +1,39 @@
+
+1.dynamic_cast < type-id > ( expression)
+
+dynamic_cast主要用于类层次间的上行转换和下行转换，还可以用于类之间的交叉转换.
+作用：将一个基类对象指针（或引用）cast到继承类指针，dynamic_cast会根据基类指针是否真正指向继承类指针来做相应处理，
+对指针进行dynamic_cast，失败返回null，成功返回正常cast后的对象指针；
+对引用进行dynamic_cast，失败抛出一个异常，成功返回正常cast后的对象引用.
+
+dynamic_cast把expression转换成type-id类型的对象。Type-id必须是类的指针、类的引用或者void*
+如果type-id是类指针类型，那么expression也必须是一个指针，如果type-id是一个引用，那么expression也必须是一个引用.
+dynamic_cast运算符可以在执行期决定真正的类型.
+如果基类指针或者引用确实指向一个派生类对象, dynamic_cast会传回适当转型过的指针.
+如果基类指针或者引用没有指向一个派生类对象, dynamic_cast会传回空指针.
+
+在类层次间进行上行转换时，dynamic_cast和static_cast的效果是一样的；
+在进行下行转换时，dynamic_cast具有类型检查的功能，比static_cast更安全.
+
+
+2. 矩阵转置  Matrix Transpose
+https://devblogs.nvidia.com/efficient-matrix-transpose-cuda-cc/
+https://github.com/NVIDIA-developer-blog/code-samples/blob/master/series/cuda-cpp/transpose/transpose.cu
+https://www.cs.colostate.edu/~cs675/MatrixTranspose.pdf
+a. global memory coalescing, 解决办法: 
+    (1). The way to avoid uncoalesced global memory access is to read the data into shared memory, 
+         and have each half warp access noncontiguous locations in shared memory in order to write contiguous data to odata.
+    (2). In the first do loop, a warp of threads reads contiguous data from idata into rows of the shared memory tile. 
+         After recalculating the array indices, a column of the shared memory tile is written to contiguous addresses in odata
+b. shared memory bank conflicts.  
+   解决办法:  pad the width in the declaration of the shared memory tile, making the tile 33 elements wide rather than 32
+
+
+3. 条件变量和semaphore的区别
+信号量是由内核来维护的, 所以也可以作用于进程间.
+条件变量的使用是需要结合锁机制的.
+Semaphore和Mutex类似，表示可用资源的数量，和Mutex不同的是这个数量可以大于1.
+互斥锁必须总是由给他上锁的线程解锁,因为此时其他线程根本得不到此锁，信号量没有这种限制：一个线程等待某个信号量，而另一个线程可以挂出该信号量.
+每个信号量有一个与之关联的值，挂出时+1，等待时-1，那么任何线程都可以挂出一个信号，即使没有线程在等待该信号量的值.
+不过对于条件变量来说，如果pthread_cond_signal之后没有任何线程阻塞在pthread_cond_wait上，那么此条件变量上的信号丢失.
+
