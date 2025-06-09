@@ -23,3 +23,5 @@ python test_flash_attn.py
 11. https://zhuanlan.zhihu.com/p/607364156  on Intel GPU    
 
 12. https://crfm.stanford.edu/2023/10/12/flashdecoding.html Flash-Decoding for long-context inference    
+
+13. https://zhuanlan.zhihu.com/p/410776234  Attention 物理意义理解
