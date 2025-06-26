@@ -1,0 +1,15 @@
+1. 使得需要线程间通信的计算尽可能在单个线程块中执行    
+2.  In a SIMT architecture, rather than a single thread issuing vector instructions applied to data vectors, multiple threads issue common instructions to arbitrary data. SIMD 是单线程issue 向量指令作用于 data， SIMT 是多线程    
+
+3. 在 Kepler（SM 3.0）及之后架构中，引入专用硬件模块处理 shfl：
+   允许每个线程在 shfl 执行阶段，以另一个 lane ID 为索引读取其寄存器值
+   这类似于一个 跨寄存器 lane-select MUX
+   并且只适用于同一个 warp，因为 warp 同时调度、无时序不确定性   
+    val = RegFile[warp_id][thread_id = 0][val_reg_index]
+   不能跨 warp 实现？因为：
+     跨 warp 之间没有同步执行保障（divergent）
+     不同 warp 执行可能在 pipeline 的不同 stage
+     寄存器文件划分也有局部性，跨 warp 的 lane 定址会带来极大复杂性与延迟
+    因此，__shfl_* 只能用于 warp 内通信，warp 之间仍需 shared memory + barrier 同步
+
+    https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/

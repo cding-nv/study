@@ -1,0 +1,191 @@
+
+	
+TensorRT 整体设计与实现
+1. parser 解析文件格式，构建Network
+2. 创建 graph
+3. layer fusion 融合
+4. Tactic
+5. Memory management 优化
+6. Execute
+7. iPlugin
+8. Dimension 的推导
+9. int8 calibration
+
+1. parser   解析文件格式
+   code 已经开源
+    caffe parser
+    onnx parser
+    uff parser 
+
+  data formats
+    NC/xHWx  比如 NCHW+fp32 NC/32HW32+int8   NC/4HW4+int8 可以刚好放在一个寄存器里   NC/2HW2 + fp16
+    NHW{C/x}  NHW{C/8}8+fp16 for fp16 on volta and turing
+	N/xCHWx  N/2CHW2 + fp16   Legacy
+
+  构建 Network 
+  有向图 
+  Network {    （INetworkDefinition）
+ 	addConvolution();
+	addSoftMax();
+	addPluginV2();
+	……;
+	NetworkTensors;  （ITensor）    build 阶段才会计算 dimention，刚开始创建的时候不会
+	NetworkLayers;（ILayer）包含IPluginV2Layer 每个ILayer对应一个或多个node实现
+	       ILayer -> IConvolutionLayer ->
+		   NetworkLayers               -> APILayerImpl<IConvolutionLayer, ConvolutionParameters>   -> ConvolutionLayer
+	inputs;
+	outputs;
+	……
+   }
+
+
+2. 创建 Graph
+
+class Graph {
+    tensors;
+    regions; region 是 memory 的抽象
+    nodes; node是kernel（算子）的抽象
+    inputTensors;
+    outputTensors;
+}
+Region 表示一片memory， 可以容纳一个或多个tensor.  初始化时每个tensor指向独立的region，但经过graph优化以后可以合并region 比如水平融合， eliding concatenation
+
+每个Tensor引用一个region，有起始地址， 长度
+NetworkLayer根据ILayer type 创建 node, 比如
+	convolution node
+	softmax node
+       PluginV2Node 
+       ……
+Node {
+    name;
+    input tensors;
+    output tensors;
+    precision;
+    ……
+}
+
+
+3. Layer Fusion 融合
+builder/cudnnBuilderGraphOptimizer.cpp
+多个节点合并成一个节点，可以减少 kernel launch 的次数，提升GPU使用率，优化memory存储
+top 排序 找出依赖的 layer， 做完某一个 fusion 继续往后不用重头再来
+a. scale fusion for convolution
+b. 垂直融合  （固定 pattern）  融合是两个两个来，如果是三个就先融合前两个，再融合第三个
+     定义fusion list
+	 
+     convolution + relu
+     fully connection + relu
+     scale + activation
+     convolution + eltwise sum
+     ……
+     先从graph里一个一个node去找有没有对应的pattern， 找到了就调用这个pattern的函数更新graph
+c. 水平融合   比如 多个 convolution 同一个输入，filter 大小一致，将 filter在k方向上拼起来，输出得到一个tensor再切分成多个
+d. 删除 concatenations
+e. 删除 dead layer    因为可能用户 mark 的 output layer 不是最后一个 tensor ， 只用计算输出output依赖的部分
+f. 删除 slices
+Graph Optimizer 是静态过程，即认为 fusion 总是有效，其实不确定fusion之后一定更快
+Graph Optimizer 完成以后得到新的 graph，主要两个部分 nodes 和 Tensors， 
+nodes的 parameters 确定了，有些weights 发生了改变比如 convolution scale 后的weights， 但具体哪个node engine kernel 来做 包括 tactic format 还不确定
+tensor dimention，region 的位置offset，生产者消费者都确定了，具体的 format 还不确定
+
+
+4. Tactic
+决定 tensor datatype 和 format， 和 具体engine layer， 同一功能的算子 有多种实现
+比如 softmax：
+    cudnnSoftmaxForward()
+    Softmax.cu
+比如 Convolution:
+    Cask     
+    Cudnn   功能全
+    Group convolution
+    Winograd  理论上计算量小
+    也可能不同的参数
+在layer之间插入 reformat，输出它所消耗的时间， dynamic programming 的方法，最后一个tensor 得到的时间为总时间 
+每个node分配一个tactic， 且输入输出的format是确定的
+选择时间最小的  tactic/formats， 找最优算子
+    cudaEventRecord(context.start, context.cudnnStream)
+    layer.execute()
+    cudaEventRecord(context.stop, context.cudnnStream)
+有 propose 的 format，去除不合理的format，局部最优避免组合爆炸，允许用更高精度的，可能fp32性能更好
+有 minFind 方案即跑多次取最小值，有 avgFind 方案即跑多次取平均值
+支持动态dimension 的 kernel auto-tuning
+
+
+5. Memory management 优化
+优化原则： Allocating memory for each tensor only for the duration it’s usage
+user 分配 input/output tensor cuda memory 
+intermediate tensor 从 region 分配，region 真正分配 cuda memory，内存池，静态使用
+input/output tensor memory 有 bindingIndx，其他的有 blockIndex
+对于 input memory 增加了 cudaEvent， 当 input memory 使用完毕后触发，通知 user 可以覆盖新的数据
+每个 region 被指定format
+每个tensor需要一个region， 
+多个tensor可以指向同一个region
+创建 memory graph， 表示region 依赖关系，在build engine 的时候做
+当region里 某一个 block 不再需要时， 可回收放在 recycled blocks里再利用，或者从region里申请新的 block 
+不允许在执行的时候 分配内存，理由：
+	1. malloc / cudaMalloc  很慢
+	2. cudaMalloc 是blocking 阻塞式的
+	3. malloc / cudaMalloc 消耗的时间不可控
+	runtime execute 里不能有 C++ std::containers
+也有些 engine kernel 需要保存中间结果，从 scratch space 分配，会获得同样的指针，persistent memory, 创建 engine context 的时候就会分配好
+
+6. Execute
+engine 包括 weights，tactic choice，kenel arguments，memory graph，tensor binding/block_index/strides 等
+enqueue 的时候只需要 异步顺序 launch kernel into stream，不需要做很多额外工作
+serialization/deserialization 用 flatBuffer 实现，跨平台/os 不兼容
+
+python:  ./model_runner.py -> GenerationSession -> self.runtime.deserialize_cuda_engine(engine_buffer)
+
+从engine创建context
+ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream->data(), trtModelStream->size(), nullptr);
+IExecutionContext* context = engine->createExecutionContext();
+
+支持多个context同时运行
+提供阻塞 非阻塞两种接口
+需要初始化 cuda， cudnn， cublas context， 和cuda stream 等
+
+
+7.iPlugin
+a.  class IPluginV2 {
+      Initalize;  engine 创建的时候调用
+      output tensor dimension;
+      enqueue();  执行
+      ……
+}
+
+b. register plugins and   注册到 mPluginCreatorList里
+//! look up the Plugin Registry during de-serialization
+
+c. class IPluginV2Layer : public Ilayer
+   IPluginV2Layer* Network::addPluginV2(ITensor* const* inputs, int nbInputs, IPluginV2& plugin)
+   IPluginV2是用户要实现的类
+   IPluginV2Layer 会加入到 NetworkLayers数组里， 不参与graph 优化
+   每个NetworkLayer会创建对应的node， IPluginV2Layer 会创建 PluginV2Node， PluginV2Node会调用到 用户实现的 IPluginV2 类
+   
+
+8. Dimension 的推导
+    加入了shapeTensor, 用于存储Shape信息的0维或1维tensor, 
+    用slice, Concat, ElementWise(mul/div 乘除运算), 
+    Gather, Padding, Reduce, Shuffle 等来推导dimension.
+    Profile
+    之前只需要对固定的dimension来选择最优的cuda kernel, 
+    现在有多种dimension, 所以引入了profile 来指定动态输入的最大max，最小min以及一个最优opt尺寸.
+    Profile实际上定义了所有动态输入的最大，最小以及一个最优尺寸。优化的结果能够保证最小到最大范围内的所有尺寸都能够使用这个engine运行，并且opt尺寸下拥有最优的性能
+
+
+9. int8 calibration
+   calibration-FP32-to-INT8.pdf
+  a. weight 和 activation 不一样 activation 就是tensor 算出来的结果
+   Y = X * W Yi x Sy = （Xi x Sx） * （Wi x Sw）
+   weight 的scale factor 就直接找出 max Max / 127 就是scale factor
+  b. activation 要复杂一点 根据样本 batch 获取 tensor value， 首先要为 fp32 value 建立直方图 分成 2048份 每找到一个首次出现的 大于 2的i次方的 Max 值， 直方图就变窄一半， 每个格子能容纳的数值增加一倍 
+   从 1~ 128 即i=0 开始， 1~129 即 i = 2， i 一直到 2048-128 = 1920 把每一个 P[i] 映射到 Q[i] 怎么映射呢， 比如 1 ~ 129，129之外的全都饱和掉
+   1~129里的最大值除以127 得到 当前 scale factor， 然后 里面的每个value 除以 scale factor 再四舍五入到 1~ 127 之间的数值
+   反映射 把得到这些四舍五入的值 再还原成 1~129 之间的数值 算 divergence[i] = KL_divergence(reference_distribution_P, candidate_distribution_Q)
+   Candidate distribution Q[i] is generated after merging i bins, from bin[0] to bin[i-1], into 128 bins. Afterwards, Q[i] is expanded again into i’bins.
+   p(i)之和 Q(i)之和 = 1 其实就是换算成比例 每个 p(i) 或 Q(i) 就是这个区间值的比例, 
+   信息量损失不仅包括饱和掉的 还包括四舍五入的, 区间选的越大,饱和掉的损失就越小, 但四舍五入损失的就越大(因为max越大 损失会放大), 区间选的越小, 四舍五入损失越小,但饱和掉的损失越大
+   最后找到信息损失最小的i 即最好的dynamic range fp32 的scale factor 即是这个 layer 的 scale factor
+   融合后的layer 比如 conv + Relu + 。。。 只用融合前最后一层 layer 的 activition scale factor
+
+

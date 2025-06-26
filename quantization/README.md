@@ -120,5 +120,24 @@ https://arxiv.org/abs/2309.05516
 Ablation studies 消融实验看上去  V 的贡献不太大
 ![](./autoround-finetune.png)
 
+### FP8
+从 model  models--deepseek-ai--DeepSeek-R1 读取第一个 expert 
+  w2 down weight [7168, 2048],  
+             前 8 个   tensor([[-24., -20., -20., 12.,  -8., -64., -48.,  72.]], dtype=torch.float8_e4m3fn)
+  w2 down weight_scale_inv [56, 16] 
+             前 8 个   tensor([[0.0001431, 0.0000824,  0.0000883,  0.0001898, 0.0001119,  0.0000965, 0.0001045,  0.0001809]])
+  block_size = [128, 128],  即 weight 前128 个 都用 scale 0.0001431
+             [-24., -20., -20., 12.,  -8., -64., -48.,  72.] * 0.0001431 = 
+                       [-0.0034344, -0.0028620, -0.0028620, 0.0017172, -0.0011448, -0.0091584, -0.0068688, 0.0103032]
+
+  和 code print 第一个 moe rank0 输入 w2 bfloat16 数据相符： #### w2  tensor([[-0.0034, -0.0029, -0.0029,  0.0017, -0.0011, -0.0092, -0.0069,  0.0103]],   device='hpu:0', dtype=torch.bfloat16)  rank  0 ep_shift  0
+
+```
+fd, weight_scale_m, weight_scale_n = weight_scale.shape
+weight_scale = weight_scale.view(fd, weight_scale_m, 1, weight_scale_n, 1)
+weight = weight.view(fd, weight_scale_m, block_size_m, weight_scale_n, block_size_n)
+dequant_weight = weight.to(dtype) * weight_scale.to(dtype)
+dequant_weight = dequant_weight.view(fd, weight_scale_m*block_size_m, weight_scale_n*block_size_n)
+```
 
 
