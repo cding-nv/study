@@ -1,0 +1,62 @@
+diff --git a/src/fastertransformer/models/llama/Llama.cc b/src/fastertransformer/models/llama/Llama.cc
+index 37ee21b..eb3ccbc 100644
+--- a/src/fastertransformer/models/llama/Llama.cc
++++ b/src/fastertransformer/models/llama/Llama.cc
+@@ -21,6 +21,17 @@
+ #include "src/fastertransformer/layers/beam_search_layers/BaseBeamSearchLayer.h"
+ #include <algorithm>
+ 
++#include <time.h>
++#include <chrono>
++#include <iostream> 
++
++std::time_t getTimeStamp()
++{
++    std::chrono::time_point<std::chrono::system_clock,std::chrono::milliseconds> tp = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());//获取当前时间点
++    std::time_t timestamp =  tp.time_since_epoch().count(); //计算距离1970-1-1,00:00的时间长度
++    return timestamp;
++}
++
+ namespace fastertransformer {
+ 
+ template<typename T>
+@@ -789,7 +800,22 @@ void Llama<T>::forward(std::unordered_map<std::string, Tensor>*       output_ten
+                             beam_width,
+                             stream_);
+ 
++    int index = -1;
++    std::time_t start = getTimeStamp();
++    std::time_t end = 0;
++    std::time_t times[2048] = {0};
+     for (int step = max_input_length; step < (int)max_output_seq_len; step++) {
++       index += 1;
++       if (index == 1) {
++           end = getTimeStamp();
++           std::cout << "#### first, " << end - start << std::endl;
++           start = end;
++       }
++       if (index >= 2) {
++           end = getTimeStamp();
++           times[index-2] = end - start;
++           start = end;
++       }
+         const int src_indir_idx = (step - max_input_length) % 2;
+         const int tgt_indir_idx = 1 - src_indir_idx;
+ 
+@@ -1061,7 +1087,15 @@ void Llama<T>::forward(std::unordered_map<std::string, Tensor>*       output_ten
+                                      stream_);
+         }
+     }
+-
++    std::cout << "#### Next_latency, ";
++    std::time_t sum = 0;
++    for (int time_i = 0; time_i < index - 1; time_i++) {
++        std::cout << " " << times[time_i];
++       sum += times[time_i];
++    }
++    std::cout << std::endl;
++    std::time_t next_latency = sum / (index - 1);
++    std::cout << "#### Average latency: " << next_latency << std::endl;
+     setOutputTensors(output_tensors, input_tensors, max_input_length, max_output_seq_len);
+     sendTensorsToFirstPipelineNode(output_tensors, input_tensors);
+ }

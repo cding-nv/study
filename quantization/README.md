@@ -139,5 +139,17 @@ weight = weight.view(fd, weight_scale_m, block_size_m, weight_scale_n, block_siz
 dequant_weight = weight.to(dtype) * weight_scale.to(dtype)
 dequant_weight = dequant_weight.view(fd, weight_scale_m*block_size_m, weight_scale_n*block_size_n)
 ```
+https://arxiv.org/pdf/2209.05433     
 
+https://juejin.cn/post/7392071348480917515  
 
+```
+
+``` 
+Prefill 和  decoding phrase 是如何区分的
+attention/layer.py      ctx_attn_metadata = get_forward_context().attn_metadata
+     vllm/forward_context.py
+      attention/backends/hpu_attn.py     
+         is_prefill = attn_metadata.is_prompt
+worker/hpu_model_runner.py
+        prepare_input_tensors()    is_prompt
