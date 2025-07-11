@@ -1,0 +1,150 @@
+task:
+1. cuda programming guide
+2. cuda c++ best practices guide
+3. reduction
+4. gemm  tile，  tensor core 
+5. network 热点 瓶颈 分析  nsight system   结合简历   
+6. kernel 如何分析 performance ，  nsight compute  结合简历   pytorch profiling
+7. pytorch profiling  实例： LLM
+      from torch.profiler import profile, record_function, ProfilerActivity
+	  print(prof.key_averages().table(sort_by="cuda_time_total" if torch.cuda.is_available() else "self_cpu_time_total", row_limit=10))
+	  使用 Profiler 分析模型：
+		activities 参数指定要分析的活动类型（CPU 或 CUDA）。
+		record_shapes 记录张量形状信息，有助于分析内存使用。
+		profile_memory 跟踪内存分配情况。
+		with_stack 收集函数调用栈信息，便于定位性能瓶颈。
+		分析结果：
+		使用 key_averages() 方法获取关键操作的平均性能指标。
+		使用 table() 方法以表格形式打印结果，按耗时排序。
+		使用 export_chrome_trace() 导出详细跟踪信息，可在 Chrome 浏览器的 chrome://tracing 中可视化分析。
+		如何发现瓶颈：
+		查看耗时最长的操作：在输出表格中，按 cuda_time_total 或 self_cpu_time_total 排序，找出最耗时的操作。通常，卷积层和全连接层是计算密集型操作，可能成为瓶颈。
+        分析内存使用：查看内存分配情况，识别内存占用过高的操作或模块。
+        检查 GPU 利用率：如果 GPU 利用率低，可能是数据加载或 CPU-GPU 数据传输成为瓶颈。
+        可视化分析：在 Chrome Tracing 中打开导出的跟踪文件，查看操作的时间线和调用关系，识别同步点和空闲时间。
+       Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg      Self XPU    Self XPU %     XPU total  XPU time avg    # of Calls  
+-
+aten::linear         0.28%      70.466ms        33.26%        8.368s     218.030us       0.000us         0.00%        3.010s      78.427us     38378  
+     aten::t         0.13%      33.612ms         0.33%      81.884ms       2.188us       0.000us         0.00%       0.000us       0.000us     37419  
+aten::transpose      0.21%      52.299ms         0.38%      95.853ms       1.319us       0.000us         0.00%       0.000us       0.000us     72648  
+    aten::addmm      0.35%      89.073ms        30.78%        7.746s     244.110us       0.000us         0.00%        4.344s     136.890us     31730  
+aten::scaled_dot_product_attention
+                     0.22%      54.544ms        25.83%        6.500s     922.618us       0.000us         0.00%        3.183s     451.826us     7045  
+aten::_sdpa_math     0.10%      26.323ms        25.62%        6.445s     914.876us       0.000us         0.00%        3.183s     451.826us     7045  
+
+寻找高耗时的 op，  cpu 瓶颈  cpu% 等   gpu 瓶颈 gpu%, 调用次数， 对比 cpu/gpu 时间， 若 cpu 长 可能数据准备跟不上 gpu，若 gpu 长 说明 计算密集型
+计算密集型 可采用混合精度 torch.cuda.amp
+数据传输可以异步加载 减少 cpu-gpu 来回数据
+		
+8.  nv P4  video codec, cuda d2d copy engine 
+9. gpu 发展史 
+10. mha ali doc ，  einsum ali doc 
+11. LLM 包含哪些算子， 计算密集型，访存密集型
+
+2.
+文字+情感 输出自然有个性特色的语音
+https://github.com/fishaudio/Bert-VITS2/discussions/396
+
+3.
+multi-head-attention 
+forword total: 3.706ms
+    dense 5个 1.83ms   +   mask+softmax+scale+dropout 1.539ms, dense 占  1.83/3.706 = 49.4%   融合之后提升 37.5
+backward total 6.048ms
+    dense 10个 3.821ms + mask+softmax+scale+dropout 1.555ms, dense 占 63.2%   融合之后提升 32.2%   
+24 layers 一个 step 中 mha 前向反向占 30%    （37.5%+32.2%）* 30% = 10.4%   -> end to end 提升 9.0%,  A100 提升更多  18.6%
+显存占用更少， 可以跑更大的 batch  15 -> 17  收敛曲线符合预期
+固定 seed 并 initalizer 后check loss :  替换后对比 loss 精确在小数点后4位
+
+softmax kernel fusion:  sum/max 前后两个 warpReduceSum （采用shuflle 指令） 
+   用 sharedMemory 保存每个 warp 32 个数累加的结果 下标位 warpID （lane0 来做）
+   再用 blockDim.x/32 个 thread 组成一个warp 通用用shuffle 指令 累加所有 之前 shareMemory 保存的结果
+   即在一个block 内完成 seqlen 所有的累加   1024 ？  2048 
+   如果 seqlen 超过了 1024 或者 2048， 需要 block 通信 ， 可以用   cooperative group 跨 block 通信， kernel 由 cudaLaunchCooperativeKernel 启动；
+	template <typename T>
+	__inline__ __device__
+	T warpReduceSum(T val)
+	{
+	  #pragma unroll
+	  for(int mask = 16; mask > 0; mask >>= 1)
+		val += __shfl_xor_sync(FINAL_MASK, val, mask, 32);
+	  return val;
+	}
+	
+	template <typename T>
+	__inline__ __device__
+	T blockReduceSum(T val)
+	{
+	  static __shared__ T shared[32];
+	  int lane = threadIdx.x & 0x1f;
+	  int wid = threadIdx.x >> 5;
+
+	  val = warpReduceSum<T>(val);
+
+	  if(lane == 0)
+		shared[wid] = val;
+	  __syncthreads();
+
+	  val = (threadIdx.x < (blockDim.x >> 5 )) ? shared[lane] : (T)0.0f;
+	  val = warpReduceSum(val);
+	  return val;
+	}
+
+4.
+kernel fusion， 粗粒度，细粒度， 减少访存开销
+QKV GEMM 提高并行度 coalescing 访存， 充分利用 shared memory registers
+warp-level communication: shuffle 指令
+overlapping I/0   asynchronous worker which prefetches batches of data
+data/tensor/pipeline parallel
+
+5.
+einsum 
+
+6.
+online normalizer calculation for softmax: 一次读数据的过程中，同时完成两件事：找到最大值，并且算出归一化需要的总和 再结合 topK 挑出概率最大前 K 个 
+
+7. fastertransformer dpct
+    a. ptx rewrite to be sycl c++  “fma.rn.f16x2” will take each 32bit unsigned integer operand as two combined 16bit half precision floating point operands and will do FMA (fused multiply and add) operation on them:
+    b. cublasLT to oneMKL
+	c. misc change
+	d. slower oneMKL gemm than XeTLA used by IPEX. 
+	e.  cudaFree 和前面的kernel 有隐式同步 而 sycl::free 没有
+	f. Vtune profiling shows the main bottleneck is oneMKL GEMM function bounded by PVC memory bandwidth
+
+
+8. DCGM
+全面的 GPU 监控
+可采集 GPU 核心指标，包括：
+硬件状态：温度、功耗、风扇转速、显存使用率、GPU 核心利用率等；
+性能指标：SM（流多处理器）利用率、PCIe 带宽、NVLink 通信状态、显存读写速率等；
+软件层信息：运行的进程 / 应用对 GPU 的占用情况、CUDA 版本兼容性等。
+
+分析各种机器学习/深度学习算法在不同gpu架构上的性能
+识别架构和软件性能瓶颈，并提出优化方案
+探索深度学习应用中的新特性和硬件能力
+熟悉基于gpu或加速器的深度学习平台和软件栈
+具备扎实的计算机架构背景
+熟悉大语言 LLM 或者 生成式人工智能深度学习算法
+
+分析最先进的深度学习网络 识别并开发性能优化方案
+以影响英伟达当前和下一代推理产品的软件和架构团队
+为最先进的深度学习网络和算法开发分析模型，以创新处理器和系统架构的设计，提升性能和效率
+制定硬件/软件配置和指标，用于分析现有和未来单处理器及多处理器配置中的性能，功耗，和精度
+与公司内部的架构，软件 产品团队合作，指导下一代深度学习硬件/软件的发展方向
+熟悉流行的AI模型 例如大语言模型和生成式人工智能内容生成模型
+熟悉典型的深度学习软件框架 例如 torch， jax， tensorflow， TensorRT
+
+Question:
+   https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared-memory
+   
+
+gloabl memory, L2 cache, shared memory, RegisterFile, contstant memory, texture memory 
+https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html
+
+
+1. 即时编译。应用程序在运行时加载的任何 PTX 代码都由设备驱动程序进一步编译为二进制代码。这称为即时编译（just-in-time compilation）
+    PTX 和二进制代码会嵌入到 CUDA C++ 应用程序中由 -arch 和 -code 编译器选项或 -gencode 编译器选项控制
+2. cuda runtime  libcudart.so   cuda driver libcuda.so
+3. L2 cache : 当一个 CUDA 内核重复访问全局内存中的一个数据区域时，这种数据访问可以被认为是持久化的 (persisting )。 
+   另一方面，如果数据只被访问一次，那么这种数据访问可以被认为是流式的 (streaming )。
+4. shared memory.
+    共享内存比全局内存快得多。 它可以用作暂存器（或软件管理的缓存），以最大限度地减少 CUDA 块的全局内存访问
