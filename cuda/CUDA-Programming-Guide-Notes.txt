@@ -5,6 +5,7 @@ task:
 4. gemm  tile，  tensor core 
 5. network 热点 瓶颈 分析  nsight system   结合简历   
 6. kernel 如何分析 performance ，  nsight compute  结合简历   pytorch profiling
+   offloading kv cache 量化
 7. pytorch profiling  实例： LLM
       from torch.profiler import profile, record_function, ProfilerActivity
 	  print(prof.key_averages().table(sort_by="cuda_time_total" if torch.cuda.is_available() else "self_cpu_time_total", row_limit=10))
@@ -40,10 +41,26 @@ aten::_sdpa_math     0.10%      26.323ms        25.62%        6.445s     914.876
 9. gpu 发展史 
 10. mha ali doc ，  einsum ali doc 
 11. LLM 包含哪些算子， 计算密集型，访存密集型
+12. ipex paper https://github.com/cding-nv/study/blob/main/pytorch_code/ipex_code_reading/ipex_paper.pdf
+    a. 算子融合和 kvcache 布局。减少 data move, 比如 transpose, cat, index select, 融合 FusedRMSNorm， QKVLinear, FusedRope, FusedSDP, 改变kvcache 内存布局，
+	   从batch优先布局转换到seqence 优先布局 直到最后一层layer，转换回batch优先布局。
+    b. cache(token) size =  2 x Layers x Heads x Dimension x sizeof(datatype)
+	   cache(standard) = batch x beam_search x (N_prompt + N_response) x Cache(token)
+	   连续存放kv会浪费内存，因为BW
+	   可能需要更大 cache， 且之前 kv cache 可能不复用， 导致内存碎片
+       segment kv cache 解决  类似 paged attention block-level kv cache
+     	   [Nstep, BSxBw, H, D], 预分配 Nstep=16, 超过再分配Nstep=32, 不同 BS 分段size不同
+           Cache(segment) = BS x (N_prompt + Bw x Ceil(N_response/step) x step) x cache(token)	   
+	c. kv cache qunatization  量化； linear tensor parallel; 动态合并 decode 阶段多个request
+	   内存优化	PagedAttention，Block KV Cache，Quantized KV
+       计算优化	FlashAttention 2，Tensor Parallel，Fused Kernels
+       调度优化	Token Grouping（将相似seq_len 和 prompt_len 的请求分组）、动态 batch 调度、Prefill/Decode 分离
+       复用优化	Prompt Caching、分组执行、Cache 共享机制
 
 2.
 文字+情感 输出自然有个性特色的语音
 https://github.com/fishaudio/Bert-VITS2/discussions/396
+动态 shape ， onednn 算子， 低精度 fp16 
 
 3.
 multi-head-attention 
@@ -106,7 +123,7 @@ online normalizer calculation for softmax: 一次读数据的过程中，同时�
     a. ptx rewrite to be sycl c++  “fma.rn.f16x2” will take each 32bit unsigned integer operand as two combined 16bit half precision floating point operands and will do FMA (fused multiply and add) operation on them:
     b. cublasLT to oneMKL
 	c. misc change
-	d. slower oneMKL gemm than XeTLA used by IPEX. 
+	d. slower oneMKL gemm than XeTLA used by IPEX.  --- cache miss
 	e.  cudaFree 和前面的kernel 有隐式同步 而 sycl::free 没有
 	f. Vtune profiling shows the main bottleneck is oneMKL GEMM function bounded by PVC memory bandwidth
 
@@ -117,6 +134,260 @@ online normalizer calculation for softmax: 一次读数据的过程中，同时�
 硬件状态：温度、功耗、风扇转速、显存使用率、GPU 核心利用率等；
 性能指标：SM（流多处理器）利用率、PCIe 带宽、NVLink 通信状态、显存读写速率等；
 软件层信息：运行的进程 / 应用对 GPU 的占用情况、CUDA 版本兼容性等。
+
+9. deepseek 
+   moe 671B   n_group=8
+   deepseek_v2.py  
+       ColumnParallelLinear, Y = X[A1,A2,...,Ap] + b   -> all_gather  concat
+	   RowParallelLinear, 
+	          | A_1 |
+              | .   |
+          A = | .   |        X = [X_1, ..., X_p]     -> all_reduce
+              | .   |
+              | A_p |
+		MLP: 	 down_proj( silu(gate_proj(x)) * up_proj(x) )  
+		         可以将 gate 和 up  合并用 MergedColumnParallelLinear
+                 down 用的是 RowParallelLinear
+		MOE:   https://github.com/intel-sandbox/llm-arc-flex/blob/main/models_arch/deepseek/deepseek-layer-moe.png
+		           EP=8  all_reduce
+		       num_expert_group=config.n_group=8, 训练的时候有负载均衡的作用，所有experts能被均匀选择，forward的时候没用到    
+			   gate 开头一个小 linear 采用 ReplicatedLinear 即weights完全复制，每张卡完整计算，不切片，不通信
+			   接下来 select_experts() "vllm/model_executor/layers/fused_moe/layer.py" ,
+			       topk_softmax  合并高效, 返回 topK 的数值 和 index  https://arxiv.org/pdf/1805.02867
+			   再调用 torch.ops.hpu.mixture_of_experts，  
+			       load model时候只 load ep_rank 对应的 experts
+                   执行 moe 的时候，min_expert_id 和 max_exprt_id 也设置到 ep_rank 对应的区间
+                   all_reduce 不需要修改，因为 moe下面本来就有一个all_reduce，在所有expert上apply的结果是 sum 起来的，所以用现有的all_reduce 数学上是没问题的
+				       "vllm/model_executor/layers/fused_moe/layer.py -> FusedMoE()->forward()->tensor_model_parallel_all_reduce()"
+			   shared_experts 走 MLP
+
+10.
+gloabl memory, L2 cache, shared memory, RegisterFile, contstant memory, texture memory 
+| 名称              | 单位容量（近似）       | 总量（108 SM） | 说明        |
+| --------------- | -------------- | ---------- | --------- |
+| Global Memory   | 40/80 GB       | 所有 SM 共享   | 高带宽 HBM   |
+| L2 Cache        | 40 MB          | 所有 SM 共享   | 用于全局访问优化  |
+| Shared Memory   | 最多 164 KB/SM   | ≈17.28 MB  | 可配置为 L1   |
+| Registers       | 256 KB/SM      | ≈27 MB     | 高速寄存器文件   |
+| Constant Memory | 64 KB          | 所有 SM 共享   | 广播优化的只读常量 |
+| Texture Cache   | \~128 KB/SM（估） | ≈13.8 MB   | 优化读取路径    |
+
+11.
+kv cache 容量解决方法
+| 方法           | 优点       | 缺点       | 场景             |
+| ------------  | -------- | -------- | -------------- |
+| 更大显存/多卡      | 简单直接     | 显卡昂贵     | 批量高/在线服务       |
+| 低精度KV          | 节省空间     | 可能影响精度   | 本地部署、Llama.cpp |
+| KV paging       | 自动管理冷热缓存 | 系统复杂     | vLLM、MLC       |
+| KV裁剪           | 节省空间     | 可能丢信息    | 长对话、文档总结       |
+| Offload到PMEM Persistent Memory | 巨大缓存空间 掉电数据不丢失  | 访问慢、依赖硬件 | 大型推理系统         |
+| SSD / NVMe   | 成本低      | 访问慢，延迟高  | 异步批处理系统        |
+
+什么时候 清理 KV cache
+  session 完成
+  网络如 RWKV、Longformer、RetNet、Mamba 采用 sliding window 超出
+  多轮对话中 context truncation 超出模型最大长度 比如 llama2 最长4096
+
+12. 性能瓶颈
+   prefill  attention 计算复杂度 O（n2d）  尤其长序列输入，  
+         解决： flash attention 减少 memory bandwidth 使用
+               fp8 
+			   flash attention 减少了 结果回写 global memory; 使用tiling shared memory 避免 memory-bound 提升 计算密度，尤其长序列输入收益最大
+   decode 主要是 kv cache 访问
+         解决：  kv 量化，layout 管理， topk+softmax , warp reduction
+   profiling tool: nsight system, nsight compute, pytorch profiler, tensorRT profier
+   指标： sm 占有率， memory bandwidth/ cache 命中率， kernel launch latency， 
+   A100, 支持 TF32, tensor core 支持 fp16, tf32，int8
+   H100, 引入 transformer engine 支持 fp8 e4m3/e5m2, 4:1 sparsity support, HBM3, 更大 L2 cache, cuda graph
+   kernel 是否高性能： roofline 图 贴近曲线 和理论贴近 远离的要重点优化
+       register blocking: 提高 FMA指令/load-store 的比例，并且能让 FMA 指令隐藏在 load/store 指令中
+       Caching blocking: 根据缓存大小限制，争取 memory reuse 内存重用， 找到最小 bytes/Flops (floating operations) 比
+       sm utilization > 80%  占有率
+	   TensorCore 活跃度
+	   用 nsight compute 查看 瓶颈是 memory 还是 compute  L2/L1 tensorcore 使用情况
+	   优化手段： kernel fusion, warp-level __shfl / mma.sync
+	            增加 shared memory 使用 来减少 global memory 冗余访问
+				cuda graph/stream , 减少 host device 开销
+				tensorRT TVM 自动kernel 搜索  kernel auto-tuning  plugin , kv cache 管理
+		建模 调整 cache size, sm 数量，memory hierarchy 寻找优化方向
+		    考虑 pipeline stage, data movement, batch size 对 throughtput 的影响
+			多 gpu， 关注 通信开销 all-reduce, all-gather  评估 compute/ communication ratio, tensor / pipe / data parallel
+			        评估 nvlink， pcie 对 latency 的影响
+					多batch, kv cache reuse, 和 token latency 权衡 
+		Nsight system
+		Nsight compute:  sm 利用率 占有率低，  L2带宽利用率接近上限说明 memory bound, 
+	精度： fp8 / int8 calibration， 
+	      mixed precision,  layernorm, softmax 用 fp32
+	卷积性能不佳 如何查：
+	    是否调用 tensor core; 
+		是否 memory bound  L2 带宽利用率高
+		padding/stride 是否造成浪费太多
+		fp8 fallback 到 fp32 ?
+		
+				
+	   
+13.
+1. 即时编译。应用程序在运行时加载的任何 PTX 代码都由设备驱动程序进一步编译为二进制代码。这称为即时编译（just-in-time compilation）
+    PTX 和二进制代码会嵌入到 CUDA C++ 应用程序中由 -arch 和 -code 编译器选项或 -gencode 编译器选项控制
+2. cuda runtime  libcudart.so   cuda driver libcuda.so
+3. L2 cache : 当一个 CUDA 内核重复访问全局内存中的一个数据区域时，这种数据访问可以被认为是持久化的 (persisting )。 
+   另一方面，如果数据只被访问一次，那么这种数据访问可以被认为是流式的 (streaming )。
+4. shared memory.
+    共享内存比全局内存快得多。 它可以用作暂存器（或软件管理的缓存），以最大限度地减少 CUDA 块的全局内存访问
+
+14
+性能指南	
+https://github.com/HeKun-NVIDIA/CUDA-Programming-Guide-in-Chinese/blob/main/%E7%AC%AC5%E7%AB%A0%E6%80%A7%E8%83%BD%E6%8C%87%E5%8D%97/%E7%AC%AC%E4%BA%94%E7%AB%A0%E6%80%A7%E8%83%BD%E6%8C%87%E5%8D%97.md
+5.1 四大基本策略
+	a. 最大化并行执行以实现最大利用率；
+	b. 优化内存使用，实现最大内存吞吐量；
+	c. 优化指令使用，实现最大指令吞吐量；
+	d. 尽量减少内存抖动。
+	将特定内核的浮点运算吞吐量或内存吞吐量（以更有意义的为准）与设备的相应峰值理论吞吐量进行比较，可以确定内核还有多少改进空间
+
+5.2 最大化使用率
+Application level
+    异步并发
+	使需要线程间通信的计算尽可能在单个线程块内执行
+Device Level
+    使用 Stream 来启用足够多的内核来实现设备的利用率最大化
+Multiprocessor Level
+    最大化 SM 内不同功能单元之间的并行执行
+	SM 资源利用率与 SM 中常驻 Warp 的数量直接相关。 如果所有 Warp 调度器在时延期间（指令所需lantency 时钟周期）的每个时钟周期上都有一些可以发射的指令，那么 GPU 就可以实现完全利用，
+	换句话说，时延隐藏 (hidden) 时系统利用率达到最大
+	使用 --ptxas-options=-v 选项编译时，编译器会报告寄存器和共享内存的使用情况。使用 maxrregcount 编译器选项或启动边界，如启动边界中所述来控制寄存器的使用
+	应用程序还可以根据寄存器文件大小和共享内存大小对执行配置进行参数化，这取决于设备的计算能力、设备的 SM 数量以及内存带宽
+	cudaOccupancyMaxActiveBlocksPerMultiprocessor，可以根据内核的块大小和共享内存使用情况提供占用预测。
+	占用率是每个多处理器的活动warp与可能的活动warp的最大数量的比值  A100 最大线程数是2048 即 64warp
+	在计算能力为7.0的设备上，每个多处理器有65,536个32位寄存器，最多可以有2048个线程同时驻留（64个warps x 32个threads）。
+	    这意味着在这样一个设备中，如果要使多处理器有100%的占用率，那么每个线程最多可以使用32个寄存器。
+		但是，这种确定寄存器计数如何影响占用率的方法并没有考虑到寄存器分配的粒度。
+		例如，在计算能力7.0的设备上，一个使用37个寄存器的kernel以128个线程的block启动，那么会导致有12个活动的block，且占用率为75%。
+		但是同一个kernel如果使用320个线程的block启动，那么占用率为63%，因为只有4个活动的block可以驻留在多处理器上。
+		此外，每个warp寄存器的分配四舍五入到256的倍数
+	
+5.3 最大化存储吞吐量
+    最大限度地减少主机和设备之间的数据传输，因为它们的带宽比全局内存和设备之间的数据传输低得多
+	    将许多小批量的传输转换为单个的大传输总是比单独进行小传输时执行得更好
+	对于一个块中的每个线程：
+        将数据从设备内存加载到共享内存，
+        通过与块中的其他线程进行同步，使得每个线程可以安全地读取由不同线程填充的共享内存位置，
+        处理共享内存中的数据，
+        如有必要，可以通过同步以确保共享内存中的结果已更新，
+        将结果写回到设备内存。
+	全局内存来说，地址越分散，吞吐量就越低
+	    访问合并 对齐
+	    线程块的宽度和数组的宽度都必须是 Warp 大小的整数倍
+		local memory : 无法确定它们是否以常数索引的数组；会占用过多寄存器空间的大型结构或数组；
+		    如果内核使用的寄存器多于可用寄存器（这也称为寄存器溢出）使用 -ptx 或 -keep 选项进行编译查看 
+			或 使用 --ptxas-options=-v 选项编译时，编译器会报告每个内核的总本地内存使用量(lmem)
+		Shared memory: 共享内存被分成大小相等的内存模块，称为 Banks，可以同时访问。
+		    因此，对 n 个不同的 memory banks 中的 n 个地址进行的任何内存读写请求都可以同时处理，从而使得总带宽是单个模块带宽的 n 倍
+
+5.4 最大化指令吞吐量	
+    减少使用低吞吐量的 算术指令
+    减少 warp diver 分支
+    减少指令数量	
+	如果 n 是 2 的幂，则 (i/n) 等价于 (i>>log2(n)) 并且 (i%n) 等价于 (i&(n- 1))
+	由 C/C++ 标准规定）单精度浮点计算的输入会转换为双精度浮点常量。所以常量使用 f 后缀定义，例如 3.141592653589793f、1.0f、0.5f。
+	使用#pragma unroll 指令控制循环展开
+	
+5.5 最小化内存抖动
+
+__restrict__ 受限指针，程序员向编译器断言，这些指针实际上没有别名，在这种情况下，通过 c 进行的写操作将永远不会覆盖 a 或 b 的元素， 编译器现在可以随意重新排序并执行公共子表达式消除，
+    减少了内存访问次数和计算次数。 由于“缓存”的加载和常见子表达式，寄存器增加的压力被平衡了
+memory fence：  在线程调用__threadfence_block() 之前，所有对内存的写入都会被线程块中的其他线程观察到，这发生在调用线程在调用 __threadfence_block() 之后对内存的所有写入之前
+
+warp shuffle funcitons
+warpIndex = threadIdx.x / warpSize
+laneIndex = threadIdx.x % warpSize
+
+
+15.
+cuda C++ best practices guide   https://zhuanlan.zhihu.com/p/636103380
+
+1.
+To maximize developer productivity, profile the application to determine hotspots and bottlenecks.  热点 瓶颈
+To get the maximum benefit from CUDA, focus first on finding ways to parallelize sequential code.   首先发掘 code 的并行性
+Use the effective bandwidth of your computation as a metric when measuring performance and optimization benefits.  理论bandwith
+Minimize data transfer between the host and the device,  减少 h2d d2h 
+    even if it means running some kernels on the device that do not show performance gains when compared with running them on the host CPU.
+Ensure global memory accesses are coalesced whenever possible.  合并访问
+Minimize the use of global memory. Prefer shared memory access where possible.  减少 global memory 访存
+Avoid different execution paths within the same warp  分支
+
+Use shared memory to avoid redundant transfers from global memory   多用 shared memory 减少 global memory 冗余访问
+To hide latency arising from register dependencies, maintain sufficient numbers of active threads per multiprocessor (i.e., sufficient occupancy).
+    有足够多 active threads
+The number of threads per block should be a multiple of 32 threads, because this provides optimal computing efficiency and facilitates coalescing
+    block size 32 的倍数 方便合并访问
+Use signed integers rather than unsigned integers as loop counters.
+    循环 counter 用有符号
+Use the fast math library whenever speed trumps precision.  数学库 speed 比精度更重要的情况下  如三角函数
+Prefer faster, more specialized math functions over slower, more general ones when possible.
+
+Use zero-copy operations on integrated GPUs for CUDA Toolkit version 2.2 and later.
+Use shift operations to avoid expensive division and modulo calculations.  除法 取模 优化
+Avoid automatic conversion of doubles to floats.  显式 单精度  3.1415926f
+Make it easy for the compiler to use branch predication in lieu of loops or control statements.  方便编译器分支预测
+
+2. 
+v100 理论bandwith  ( 0.877GHz × 10^9 × (4096bit/8) × 2 ) ÷ 10^9 = 898GB/s。 GDDR ECC 降低了 20% 有效带宽， HBM2 有专门的 ECC 资源
+  PCIex16Gen3 只有 16 GB/s
+2048x2048 矩阵拷贝 有效 bandwidth = ((2048^2 × 4字节 × 2读写 ) ÷ 109 ) ÷ 拷贝time
+
+Requested Global Load Throughput    理论吞吐
+Requested Global Store Throughput
+Global Load Throughput    实际吞吐
+Global Store Throughput
+
+多流实现 copy data ，  execute 并发
+ sequential 
+     copy data  --------
+     execute             ~~~~~~~~
+ Concurrent 
+     copy data  -- -- -- --
+     execute      ~~ ~~ ~~ ~~
+	 
+zero copy
+cudaGetDeviceProperties(&prop, 0); 
+if (!prop.canMapHostMemory)    看支持不支持
+    exit(0); 
+cudaSetDeviceFlags(cudaDeviceMapHost);   启用
+cudaHostAlloc(&a_h, nBytes, cudaHostAllocMapped);  分配 
+cudaHostGetDevicePointer(&a_map, a_h, 0);    获取 device 指针
+kernel<<<gridSize, blockSize>>>(a_map); 
+
+3. 合并对齐访问
+一个Warp里面的线程对全局内存的读写会被设备合并成尽可能少的内存事务
+在计算能力为6.0或更高版本的设备上，L1缓存是默认值，但是无论全局加载是否缓存在L1中，数据访问单元都为32字节。
+分散的访问增加了ECC内存传输开销，特别是在将数据写入全局内存时
+
+dst[threadIdx.x] = array[threadIdx.x] + 15.0f;
+Nsight Compute分析结果所示，Kernel函数需要读取32个float数据，
+    并且写入32个float数据，而这32个数据分布在了4个sector里面。
+	驱动程序把读取和写入的请求各自合并为1个128字节的内存事务，每个内存事务读或写32个float数据，从而充分利用了带宽
+
+dst[threadIdx.x+1] = array[threadIdx.x+1] + 15.0f;   A Sequential but Misaligned Access Pattern
+Kernel函数需要读取32个float数据，并且写入32个float数据，而由于内存不对齐的原因，这32个数据分布在了5个sector里面。
+    驱动程序把读取和写入的请求各自合并为1个128字节的内存事务，每个内存事务读或写32个float数据，从而充分利用了带宽。
+
+NVIDIA Tesla V100，没有偏移量或偏移量为8个字的倍数的全局内存访问会导致4个32字节的事务，所获得的带宽约为790 GB/s。
+    否则，每个warp加载5个32字节段，预计实现大约4/5的内存吞吐量
+
+int xid = (blockIdx.x*blockDim.x + threadIdx.x)*stride; 
+stride为2会导致50%的负载/存储效率，因为事务中一半的元素没有被使用到，这浪费了大量带宽
+
+L2 cache  
+    persisting, streaming
+	 persisting 需要根据num_bytes参数的值和L2缓存的大小，可能需要调整hitRatio的值，以避免抖动L2缓存
+	 
+	 
+16. matrix multiplucation
+https://ecatue.gitlab.io/GPU2016/cookbook/matrix_multiplication_cuda/	 
+tensor core: https://www.anandtech.com/show/12673/titan-v-deep-learning-deep-dive/3 
+
+
 
 分析各种机器学习/深度学习算法在不同gpu架构上的性能
 识别架构和软件性能瓶颈，并提出优化方案
@@ -134,17 +405,19 @@ online normalizer calculation for softmax: 一次读数据的过程中，同时�
 熟悉典型的深度学习软件框架 例如 torch， jax， tensorflow， TensorRT
 
 Question:
+   tensor core fragment ，  accummulater 用的 register file  和 cuda core 用的是同样的？
+   block 是不是独占 sm 的 ？
+   这个职位需要具备哪些能力？
    https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#shared-memory
-   
+   https://zhuanlan.zhihu.com/p/636103380
+   https://github.com/HeKun-NVIDIA/CUDA-Programming-Guide-in-Chinese
+   sm 占有率怎么算的
 
-gloabl memory, L2 cache, shared memory, RegisterFile, contstant memory, texture memory 
-https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html
-
-
-1. 即时编译。应用程序在运行时加载的任何 PTX 代码都由设备驱动程序进一步编译为二进制代码。这称为即时编译（just-in-time compilation）
-    PTX 和二进制代码会嵌入到 CUDA C++ 应用程序中由 -arch 和 -code 编译器选项或 -gencode 编译器选项控制
-2. cuda runtime  libcudart.so   cuda driver libcuda.so
-3. L2 cache : 当一个 CUDA 内核重复访问全局内存中的一个数据区域时，这种数据访问可以被认为是持久化的 (persisting )。 
-   另一方面，如果数据只被访问一次，那么这种数据访问可以被认为是流式的 (streaming )。
-4. shared memory.
-    共享内存比全局内存快得多。 它可以用作暂存器（或软件管理的缓存），以最大限度地减少 CUDA 块的全局内存访问
+   https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html
+   	 
+tensor core,  wmma 
+mm, tile 
+reduction  shared memory， warp shuffle 
+flash attention
+gpu history
+Cooperative Groups 
