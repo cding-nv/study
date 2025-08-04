@@ -53,3 +53,34 @@ $ python llama_example.py --tokenizer_path ./llama2_7b_tokenizer/ --lib_path ../
 | llama-7B | 1 ARC 770  | 1024 | 128 | 1 | Int4    |            | **17 ms**| 6.1G |
 
 ## Next steps
+
+## Notes
+```
+// C++ add jit class
+static auto fasterTransformerLlamaTHS =
+    torch::jit::class_<torch_ext::LlamaOp>("FasterTransformer", "LlamaOp")
+        .def(torch::jit::init<int64_t,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              double,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              int64_t,
+                              bool,
+                              std::vector<th::Tensor>>())
+        .def("forward", &torch_ext::LlamaOp::forward);
+```
+```
+# Python Load the C++ model into Pytorch model.
+        torch.classes.load_library(os.path.abspath(lib_path))
+```
+
+```
+# Python 
+self.model = torch.classes.FasterTransformer.LlamaOp()
+```

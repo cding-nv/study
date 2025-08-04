@@ -120,6 +120,9 @@ https://arxiv.org/abs/2309.05516
 Ablation studies 消融实验看上去  V 的贡献不太大
 ![](./autoround-finetune.png)
 
+Deepseek Int4    
+https://huggingface.co/OPEA/DeepSeek-R1-int4-AutoRound-awq-asym
+
 ### FP8
 从 model  models--deepseek-ai--DeepSeek-R1 读取第一个 expert 
   w2 down weight [7168, 2048],  

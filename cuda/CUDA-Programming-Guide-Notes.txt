@@ -120,7 +120,8 @@ einsum
 online normalizer calculation for softmax: 一次读数据的过程中，同时完成两件事：找到最大值，并且算出归一化需要的总和 再结合 topK 挑出概率最大前 K 个 
 
 7. fastertransformer dpct
-    a. ptx rewrite to be sycl c++  “fma.rn.f16x2” will take each 32bit unsigned integer operand as two combined 16bit half precision floating point operands and will do FMA (fused multiply and add) operation on them:
+    a. ptx rewrite to be sycl c++  “fma.rn.f16x2” will take each 32bit unsigned integer operand as two combined 16bit half precision floating point operands 
+	   and will do FMA (fused multiply and add) operation on them:
     b. cublasLT to oneMKL
 	c. misc change
 	d. slower oneMKL gemm than XeTLA used by IPEX.  --- cache miss
@@ -200,6 +201,7 @@ kv cache 容量解决方法
    A100, 支持 TF32, tensor core 支持 fp16, tf32，int8
    H100, 引入 transformer engine 支持 fp8 e4m3/e5m2, 4:1 sparsity support, HBM3, 更大 L2 cache, cuda graph
    kernel 是否高性能： roofline 图 贴近曲线 和理论贴近 远离的要重点优化
+       layout 的选择和指令集设计， register blocking size, caching blocking size 相关。 比如 一个指令做 16*4 FMA （Instruction 对应 register blocking, 数据存取对应 cache bloking）
        register blocking: 提高 FMA指令/load-store 的比例，并且能让 FMA 指令隐藏在 load/store 指令中
        Caching blocking: 根据缓存大小限制，争取 memory reuse 内存重用， 找到最小 bytes/Flops (floating operations) 比
        sm utilization > 80%  占有率
