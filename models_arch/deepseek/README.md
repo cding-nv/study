@@ -19,6 +19,30 @@ python model.py
 ## 3. Deepseek layer, moe
 <img align="center" src="./deepseek-layer-moe.png" width="100%" height="100%">
 
+idx, top = torch.where(indices == i)   
+y[idx] += expert(x[idx]) * weights[idx, top, None]     
+找出选择 expert i 的 所有token idx,  weights[idx, top] 是 这个 token 第 top 个 expert 的标量 weight    
+
+```
+>>> import torch
+>>> indices = torch.tensor([
+...     [1, 3],   # token 0 -> expert 1, expert 3
+...     [0, 1],   # token 1 -> expert 0, expert 1
+...     [3, 1],   # token 2 -> expert 3, expert 1
+...     [2, 3],   # token 3 -> expert 2, expert 3
+... ])
+>>> print(indices)
+tensor([[1, 3],
+        [0, 1],
+        [3, 1],
+        [2, 3]])
+>>> idx, top = torch.where(indices==3)
+>>> print(idx)
+tensor([0, 2, 3])      选择 expert 3 的 token 有 第0， 2， 3 个 token
+>>> print(top)
+tensor([1, 0, 1])      他们分别是这个token 的 top1, top0, top1
+```
+
 ## 4. Deepseek R1 MLP, MOE
 <img align="center" src="./deepseek-r1-mlp-moe.png" width="100%" height="100%">
 
@@ -53,3 +77,4 @@ vllm/engine/llm_engine.py(276)__init__()
 
 
 ```
+
