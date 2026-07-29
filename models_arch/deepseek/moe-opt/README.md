@@ -151,5 +151,10 @@ asm_fmoe_a8
          - >  /usr/local/lib/python3.10/dist-packages/aiter_meta/hsa/gfx938/w16a16/bf16/stage1/ *.co
 ```
 
+## TP 切分
+W13 横切， W2 竖切，  all reduce
+
+## 
+
 参考：
 https://zhuanlan.zhihu.com/p/23129261011 
