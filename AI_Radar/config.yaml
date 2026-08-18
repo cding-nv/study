@@ -1,0 +1,54 @@
+# AI Radar 配置
+# 敏感值优先从环境变量读取,YAML 里的值作为默认
+
+proxy: "http://127.0.0.1:7078"
+request_timeout: 30
+concurrent_limit: 8            # 每源并发上限
+cache_days: 30                 # 原始 JSON 保留天数
+lookback_hours: 36             # 拉取"最近多久"的数据 (给日报留一点重叠)
+
+# GitHub PAT 也可通过 env GITHUB_TOKEN 覆盖
+github:
+  token: null                  # 建议用 env GITHUB_TOKEN
+  repos:
+    - vllm-project/vllm
+    - sgl-project/sglang
+    - NVIDIA/TensorRT-LLM
+
+# LLM 综合 (env: ANTHROPIC_AUTH_TOKEN / ANTHROPIC_BASE_URL / ANTHROPIC_MODEL)
+llm:
+  enabled: true
+  model: "claude-sonnet-4-6"   # env ANTHROPIC_MODEL 覆盖
+  # Opus 4.x 会用 extended thinking 消耗 output 预算,所以要给足;
+  # sonnet 用 4096 也够。这里 12000 给 opus/sonnet 都留出正文空间。
+  max_tokens: 12000
+  # LLM 综合失败时是否降级为规则版
+  fallback_to_rules: true
+
+# HuggingFace
+huggingface:
+  papers_top_n: 20
+  models_top_n: 15
+
+# arxiv
+arxiv:
+  categories: [cs.AI, cs.LG, cs.CL]
+  max_results_per_cat: 30
+
+# OpenRouter
+openrouter:
+  top_n: 20
+
+# 关键词跟踪 (跨源统计频次)
+keywords:
+  architecture: [MoE, mixture-of-experts, mamba, ssm, KDA, hybrid, linear attention]
+  scale: [1M context, long context, million token, 2T, 3T, trillion]
+  training: [RL, RLHF, RLAIF, RLVR, GRPO, DPO, PPO, agentic]
+  agent: [agent, tool use, computer use, browser, environment, sandbox]
+  inference: [speculative, quantization, FP8, FP4, INT4, KV cache, prefill, disagg, PagedAttention]
+  system: [CUDA, ROCm, TPU, HBM, CoWoS, NVLink, InfiniBand]
+  multimodal: [multimodal, vision, video, audio, VLM]
+  reasoning: [reasoning, chain-of-thought, CoT, test-time, o1, deepseek-r1]
+
+# Deep Dive 建议数
+deep_dive_count: 3
