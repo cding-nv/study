@@ -1,0 +1,4 @@
+# HIP Kernel Autonomous Debugger — Python dependencies.
+# Everything runs on stdlib except two packages:
+anthropic>=0.34.0     # LLM client (Anthropic-compatible API — supports Claude, DeepSeek anthropic-compat, etc.)
+langgraph>=0.2.0      # multi-agent orchestration

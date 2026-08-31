@@ -1,0 +1,19 @@
+{
+  "id": "HIP-001",
+  "title": "vector_add kernel produces wrong result / HIP illegal address for aligned N",
+  "severity": "HIGH",
+  "component": "hip_bugs/kernels/vector_add_oob.hip",
+  "environment": {
+    "gpu": "hygon DCU BW151",
+    "toolchain": "hipcc 25.10.0 / DTK 26.04",
+    "problem_size": "N = 1<<18 = 262144"
+  },
+  "description": "The vector_add<<<>>> kernel launched for N=262144 sporadically returns a wrong first element and, under some warm-up conditions, triggers hipErrorIllegalAddress on hipDeviceSynchronize(). Correctness check reports FAIL_NUMERIC with max_abs_err in the low e-3 range even though the input arrays only reach ~524 in magnitude. Behavior is deterministic across runs when the OOB write happens to hit an unmapped page.",
+  "expected_behavior": "STATUS: PASS with max_abs_err < 1e-4 for every element c[i] = a[i] + b[i].",
+  "actual_behavior": "Either STATUS: FAIL_NUMERIC (garbage at boundary elements) or STATUS: FAIL_RUNTIME with HIP_ERR: hipErrorIllegalAddress.",
+  "reproduction_hints": [
+    "Look at the grid-stride loop bound — `for (int i = tid; i <= N; ...)` includes index N.",
+    "Buffer allocation is only N * sizeof(float), so index N is one element past the end.",
+    "Fix candidate: change `<= N` to `< N`."
+  ]
+}

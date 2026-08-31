@@ -1,0 +1,447 @@
+2026-08-26 16:43:23 INFO     [main] Starting pipeline...
+2026-08-26 16:43:23 INFO     [orchestrator.graph] ============================================================
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting AI Debugging Pipeline
+2026-08-26 16:43:23 INFO     [orchestrator.graph] ============================================================
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: preprocess
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Preprocessing inputs
+2026-08-26 16:43:23 WARNING  [utils.llm_client] Ollama not reachable at http://localhost:11434: HTTPConnectionPool(host='localhost', port=11434): Max retries exceeded with url: /api/tags (Caused by NewConnectionError("HTTPConnection(host='localhost', port=11434): Failed to establish a new connection: [Errno 111] Connection refused"))
+2026-08-26 16:43:23 WARNING  [orchestrator.graph] [ORCHESTRATOR] LLM not available, using fallback analysis
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent preprocess completed in 0.01s
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: triage
+2026-08-26 16:43:23 INFO     [agents.triage_agent] [TriageAgent] Starting triage analysis
+2026-08-26 16:43:23 INFO     [agents.triage_agent] [TriageAgent] Using heuristic triage fallback
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent triage completed in 0.01s
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: log_analyst
+2026-08-26 16:43:23 INFO     [agents.log_agent] [LogAnalyst] Starting log analysis
+2026-08-26 16:43:23 INFO     [tools.log_parser] [LogParser] Parsing 2 log lines
+2026-08-26 16:43:23 INFO     [tools.log_parser] [LogParser] Found 0 unique traces, 0 errors, 0 warnings
+2026-08-26 16:43:23 INFO     [agents.log_agent] [LogAnalyst] Analysis complete: 0 traces, primary_error=none
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent log_analyst completed in 0.01s
+2026-08-26 16:43:23 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: repo_navigator
+2026-08-26 16:43:23 INFO     [agents.repo_navigator] [RepoNavigator] Starting repo navigation
+2026-08-26 16:43:23 INFO     [faiss.loader] Loading faiss with AVX512-SPR support.
+2026-08-26 16:43:23 INFO     [faiss.loader] Could not load library with AVX512-SPR support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx512_spr'")
+2026-08-26 16:43:23 INFO     [faiss.loader] Loading faiss with AVX512 support.
+2026-08-26 16:43:23 INFO     [faiss.loader] Could not load library with AVX512 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx512'")
+2026-08-26 16:43:23 INFO     [faiss.loader] Loading faiss with AVX2 support.
+2026-08-26 16:43:23 INFO     [faiss.loader] Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-08-26 16:43:23 INFO     [faiss.loader] Loading faiss.
+2026-08-26 16:43:23 INFO     [faiss.loader] Successfully loaded faiss.
+2026-08-26 16:43:23 INFO     [rag.faiss_index] [FAISSIndex] FAISS available
+2026-08-26 16:43:23 INFO     [rag.faiss_index] [FAISSIndex] Indexing 13 files from mock_repo
+2026-08-26 16:43:23 INFO     [rag.faiss_index] [FAISSIndex] Building index over 12 chunks
+2026-08-26 16:43:39 INFO     [rag.embedder] [Embedder] Loading all-MiniLM-L6-v2
+2026-08-26 16:43:39 INFO     [sentence_transformers.base.model] No device provided, using cuda:0
+2026-08-26 16:43:40 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-08-26 16:43:40 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:40 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:40 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:41 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:41 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:41 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:41 INFO     [sentence_transformers.base.model] Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-08-26 16:43:41 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:41 WARNING  [huggingface_hub.utils._http] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-08-26 16:43:41 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:42 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:42 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-08-26 16:43:42 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-08-26 16:43:42 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:42 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:43 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:43 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:43 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:43 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:43:44 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:43:44 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:44 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-08-26 16:43:44 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-08-26 16:46:10 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:11 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:11 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:11 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:12 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:12 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:12 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:12 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:12 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:13 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:13 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:13 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:13 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:14 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:14 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-08-26 16:46:14 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:14 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/vocab.txt "HTTP/1.1 200 OK"
+2026-08-26 16:46:14 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/vocab.txt "HTTP/1.1 200 OK"
+2026-08-26 16:46:15 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:15 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:15 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:16 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:16 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/special_tokens_map.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:16 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:16 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/special_tokens_map.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:17 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:17 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-08-26 16:46:17 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:17 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-08-26 16:46:18 INFO     [httpx] HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/2_Normalize/config.json "HTTP/1.1 404 Not Found"
+2026-08-26 16:46:18 INFO     [httpx] HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-08-26 16:46:18 INFO     [rag.embedder] [Embedder] Model loaded successfully
+2026-08-26 16:46:21 INFO     [rag.faiss_index] [FAISSIndex] FAISS index built: 12 vectors, dim=384
+2026-08-26 16:46:21 INFO     [rag.faiss_index] [RAG] Indexed 12 chunks from mock_repo
+2026-08-26 16:46:21 INFO     [agents.repo_navigator] [RepoNavigator] Retrieved 2 code chunks
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent repo_navigator completed in 177.53s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: repro
+2026-08-26 16:46:21 INFO     [agents.repro_agent] [ReproAgent] Starting 
+2026-08-26 16:46:21 INFO     [agents.repro_agent] [ReproAgent] Using heuristic repro generation
+2026-08-26 16:46:21 INFO     [agents.repro_agent] [ReproAgent] Saved repro to outputs/repro/repro_1787733981.py
+2026-08-26 16:46:21 INFO     [tools.execution_tool] [Execution] Running: /data/miniconda3/envs/env-3.10/bin/python outputs/repro/repro_1787733981.py (timeout=25s, cwd=outputs/repro)
+2026-08-26 16:46:21 INFO     [tools.execution_tool] [Execution] Completed in 0.13s — exit_code=2 status=fail
+2026-08-26 16:46:21 INFO     [agents.repro_agent] [ReproAgent] Final: status=fail exit_code=2 duration=0.13s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent repro completed in 0.23s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: fix_planner
+2026-08-26 16:46:21 INFO     [agents.fix_agent] [FixPlanner] Starting fix planning
+2026-08-26 16:46:21 INFO     [agents.fix_agent] [FixPlanner] Using heuristic fix planning
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent fix_planner completed in 0.01s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: reviewer
+2026-08-26 16:46:21 INFO     [agents.reviewer_agent] [Reviewer] Starting review
+2026-08-26 16:46:21 INFO     [agents.reviewer_agent] [Reviewer] Review complete: passed=False, issues=1, contradictions=1, confidence_adj=-0.15
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent reviewer completed in 0.01s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Starting agent: finalize
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Finalizing — running sanity checks
+2026-08-26 16:46:21 INFO     [validation.confidence] [ConfidenceScorer] score=0.443 (repro=fail)
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Final confidence: 0.44
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Agent finalize completed in 0.01s
+2026-08-26 16:46:21 INFO     [orchestrator.graph] [ORCHESTRATOR] Pipeline completed successfully
+2026-08-26 16:46:21 INFO     [main] Pipeline completed in 177.9s
+2026-08-26 16:46:21 INFO     [utils.output_formatter] [OutputFormatter] Report saved to outputs/reports/debug_report_20260826_164621.json
+2026-08-31 11:28:08 INFO     [main_hip] Kernel  (host):      /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip
+2026-08-31 11:28:08 INFO     [main_hip] Kernel  (container): /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip
+2026-08-31 11:28:08 INFO     [main_hip] Output  (host):      /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002
+2026-08-31 11:28:08 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 11:28:08 INFO     [hip_orchestrator.graph] [hip-orchestrator] Starting pipeline for HIP-002
+2026-08-31 11:28:08 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 11:28:09 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ preprocess
+2026-08-31 11:28:09 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ preprocess (0.90s)
+2026-08-31 11:28:09 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ triage
+2026-08-31 11:28:31 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:28:31 INFO     [hip_agents.triage_agent] [triage] LLM ok: bug_class=missing_sync
+2026-08-31 11:28:31 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ triage (21.26s)
+2026-08-31 11:28:31 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ build
+2026-08-31 11:28:31 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_rac
+2026-08-31 11:28:40 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip → status=ok warnings=18 errors=0
+2026-08-31 11:28:40 INFO     [hip_agents.build_agent] [build] reduction_race status=ok warnings=18 errors=0
+2026-08-31 11:28:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ build (9.21s)
+2026-08-31 11:28:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ runtime
+2026-08-31 11:28:40 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:28:45 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=17600.0 elapsed_ms=12.344
+2026-08-31 11:28:45 INFO     [hip_agents.runtime_agent] [runtime] exit=1 numeric_status=FAIL_NUMERIC correct=False elapsed_ms=12.344
+2026-08-31 11:28:45 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ runtime (4.97s)
+2026-08-31 11:28:45 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ kernel_analyst
+2026-08-31 11:28:45 INFO     [hip_tools.kernel_parser] [kernel_parser] 1 kernels, 1 launches, 0 suspicious patterns
+2026-08-31 11:28:45 INFO     [hip_agents.kernel_analyst] [kernel_analyst] 1 kernels, 0 suspicious patterns, 1 launches
+2026-08-31 11:28:45 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ kernel_analyst (0.00s)
+2026-08-31 11:28:45 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ probe
+2026-08-31 11:28:45 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:28:49 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=5504.0 elapsed_ms=1.535
+2026-08-31 11:28:49 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:28:54 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=5248.0 elapsed_ms=11.149
+2026-08-31 11:28:54 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:28:58 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=4800.0 elapsed_ms=12.523
+2026-08-31 11:28:58 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:29:03 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=4736.0 elapsed_ms=12.238
+2026-08-31 11:29:03 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 11:29:08 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=4608.0 elapsed_ms=1.485
+2026-08-31 11:29:08 INFO     [hip_agents.probe_agent] [probe] 5 runs → varied=4/5 statuses={'FAIL_NUMERIC'} elapsed={'min': 1.485, 'max': 12.523, 'mean': 7.786}
+2026-08-31 11:29:08 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ probe (22.76s)
+2026-08-31 11:29:08 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ fix
+2026-08-31 11:29:39 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:29:39 INFO     [hip_agents.fix_agent] [fix] LLM plan ok: bug_type=missing_sync conf=0.98
+2026-08-31 11:29:39 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ fix (30.91s)
+2026-08-31 11:29:39 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ verify
+2026-08-31 11:29:39 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HI
+2026-08-31 11:29:47 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched.hip → status=ok warnings=18 errors=0
+2026-08-31 11:29:47 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched
+2026-08-31 11:29:54 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=PASS correct=True max_err=0.0 elapsed_ms=1.731
+2026-08-31 11:29:54 INFO     [hip_agents.verify_agent] [verify] compiled=True ran=True status=PASS correct=True speedup=7.131
+2026-08-31 11:29:54 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ verify (15.38s)
+2026-08-31 11:29:54 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ reviewer
+2026-08-31 11:30:15 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:30:15 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (2872 chars)
+2026-08-31 11:30:39 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:30:39 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (2844 chars)
+2026-08-31 11:30:59 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:30:59 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (2856 chars)
+2026-08-31 11:30:59 INFO     [hip_agents.reviewer_agent] [reviewer] issues=0 contradictions=0 rec=SHIP — patch verified correct, 7.13× speedup
+2026-08-31 11:30:59 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ reviewer (65.46s)
+2026-08-31 11:30:59 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ finalize
+2026-08-31 11:30:59 INFO     [hip_orchestrator.graph] [hip-orchestrator] final confidence=1.0 verify_correct=True runtime=error
+2026-08-31 11:30:59 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ finalize (0.00s)
+2026-08-31 11:30:59 INFO     [hip_orchestrator.graph] [hip-orchestrator] Pipeline completed
+2026-08-31 11:30:59 INFO     [main_hip] Pipeline finished in 170.9s
+2026-08-31 11:31:21 INFO     [main_hip] Kernel  (host):      /workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip
+2026-08-31 11:31:21 INFO     [main_hip] Kernel  (container): /workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip
+2026-08-31 11:31:21 INFO     [main_hip] Output  (host):      /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] [hip-orchestrator] Starting pipeline for HIP-001
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ preprocess
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ preprocess (0.49s)
+2026-08-31 11:31:21 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ triage
+2026-08-31 11:31:37 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:31:37 INFO     [hip_agents.triage_agent] [triage] LLM ok: bug_class=out_of_bounds
+2026-08-31 11:31:37 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ triage (15.64s)
+2026-08-31 11:31:37 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ build
+2026-08-31 11:31:37 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oo
+2026-08-31 11:31:40 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip → status=ok warnings=19 errors=0
+2026-08-31 11:31:40 INFO     [hip_agents.build_agent] [build] vector_add_oob status=ok warnings=19 errors=0
+2026-08-31 11:31:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ build (3.00s)
+2026-08-31 11:31:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ runtime
+2026-08-31 11:31:40 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:42 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:42 INFO     [hip_agents.runtime_agent] [runtime] exit=-11 numeric_status=FAIL_RUNTIME correct=False elapsed_ms=None
+2026-08-31 11:31:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ runtime (2.24s)
+2026-08-31 11:31:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ kernel_analyst
+2026-08-31 11:31:42 INFO     [hip_tools.kernel_parser] [kernel_parser] 1 kernels, 1 launches, 1 suspicious patterns
+2026-08-31 11:31:42 INFO     [hip_agents.kernel_analyst] [kernel_analyst] 1 kernels, 1 suspicious patterns, 1 launches
+2026-08-31 11:31:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ kernel_analyst (0.00s)
+2026-08-31 11:31:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ probe
+2026-08-31 11:31:42 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:44 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:44 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:47 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:47 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:49 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:49 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:51 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:51 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_baseline
+2026-08-31 11:31:53 INFO     [hip_tools.numeric_validator] [numeric_validator] problem= status=UNKNOWN correct=False max_err=None elapsed_ms=None
+2026-08-31 11:31:53 INFO     [hip_agents.probe_agent] [probe] 5 runs → varied=0/5 statuses={'UNKNOWN'} elapsed={}
+2026-08-31 11:31:53 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ probe (10.83s)
+2026-08-31 11:31:53 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ fix
+2026-08-31 11:32:30 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:32:30 INFO     [hip_agents.fix_agent] [fix] LLM plan ok: bug_type=out_of_bounds conf=0.99
+2026-08-31 11:32:30 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ fix (37.41s)
+2026-08-31 11:32:30 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ verify
+2026-08-31 11:32:30 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_patched.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HI
+2026-08-31 11:32:33 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_patched.hip → status=ok warnings=19 errors=0
+2026-08-31 11:32:33 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_patched
+2026-08-31 11:32:34 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=vector_add status=PASS correct=True max_err=0.0 elapsed_ms=0.517
+2026-08-31 11:32:34 INFO     [hip_agents.verify_agent] [verify] compiled=True ran=True status=PASS correct=True speedup=None
+2026-08-31 11:32:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ verify (4.04s)
+2026-08-31 11:32:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ reviewer
+2026-08-31 11:32:55 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:32:55 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (2790 chars)
+2026-08-31 11:33:14 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:33:14 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (2679 chars)
+2026-08-31 11:33:35 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 11:33:35 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (2651 chars)
+2026-08-31 11:33:35 INFO     [hip_agents.reviewer_agent] [reviewer] issues=0 contradictions=0 rec=SHIP — patch verified correct
+2026-08-31 11:33:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ reviewer (60.14s)
+2026-08-31 11:33:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ finalize
+2026-08-31 11:33:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] final confidence=1.0 verify_correct=True runtime=error
+2026-08-31 11:33:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ finalize (0.00s)
+2026-08-31 11:33:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] Pipeline completed
+2026-08-31 11:33:35 INFO     [main_hip] Pipeline finished in 133.8s
+2026-08-31 12:09:14 INFO     [main_hip] Kernel  (host):      /workspace/Autonomous-debugging-system/hip_bugs/kernels/transpose_bank_conflict.hip
+2026-08-31 12:09:14 INFO     [main_hip] Kernel  (container): /workspace/Autonomous-debugging-system/hip_bugs/kernels/transpose_bank_conflict.hip
+2026-08-31 12:09:14 INFO     [main_hip] Output  (host):      /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003
+2026-08-31 12:09:14 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:09:14 INFO     [hip_orchestrator.graph] [hip-orchestrator] Starting pipeline for HIP-003
+2026-08-31 12:09:14 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:09:14 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ preprocess
+2026-08-31 12:09:15 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ preprocess (0.43s)
+2026-08-31 12:09:15 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ triage
+2026-08-31 12:09:31 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:09:31 INFO     [hip_agents.triage_agent] [triage] LLM ok: bug_class=bank_conflict
+2026-08-31 12:09:31 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ triage (16.27s)
+2026-08-31 12:09:31 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ build
+2026-08-31 12:09:31 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/hip_bugs/kernels/transpose_bank_conflict.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/tran
+2026-08-31 12:09:34 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/hip_bugs/kernels/transpose_bank_conflict.hip → status=ok warnings=18 errors=0
+2026-08-31 12:09:34 INFO     [hip_agents.build_agent] [build] transpose_bank_conflict status=ok warnings=18 errors=0
+2026-08-31 12:09:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ build (2.77s)
+2026-08-31 12:09:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ runtime
+2026-08-31 12:09:34 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:35 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.061
+2026-08-31 12:09:35 INFO     [hip_agents.runtime_agent] [runtime] exit=0 numeric_status=PASS correct=True elapsed_ms=0.061
+2026-08-31 12:09:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ runtime (1.29s)
+2026-08-31 12:09:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ kernel_analyst
+2026-08-31 12:09:35 INFO     [hip_tools.kernel_parser] [kernel_parser] 0 kernels, 2 launches, 0 suspicious patterns
+2026-08-31 12:09:35 INFO     [hip_agents.kernel_analyst] [kernel_analyst] 0 kernels, 0 suspicious patterns, 2 launches
+2026-08-31 12:09:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ kernel_analyst (0.00s)
+2026-08-31 12:09:35 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ probe
+2026-08-31 12:09:35 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:36 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.065
+2026-08-31 12:09:36 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:38 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.063
+2026-08-31 12:09:38 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:39 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.065
+2026-08-31 12:09:39 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:40 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.065
+2026-08-31 12:09:40 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_baseline
+2026-08-31 12:09:42 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.05
+2026-08-31 12:09:42 INFO     [hip_agents.probe_agent] [probe] 5 runs → varied=0/5 statuses={'PASS'} elapsed={'min': 0.05, 'max': 0.065, 'mean': 0.062}
+2026-08-31 12:09:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ probe (6.44s)
+2026-08-31 12:09:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ fix
+2026-08-31 12:10:15 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:10:15 INFO     [hip_agents.fix_agent] [fix] LLM plan ok: bug_type=bank_conflict conf=0.95
+2026-08-31 12:10:15 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ fix (32.93s)
+2026-08-31 12:10:15 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ verify
+2026-08-31 12:10:15 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_patched.hip -o /workspace/Autonomous-debugging-system/outputs/hip_r
+2026-08-31 12:10:17 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_patched.hip → status=ok warnings=18 errors=0
+2026-08-31 12:10:17 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-003/transpose_bank_conflict_patched
+2026-08-31 12:10:19 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=transpose status=PASS correct=True max_err=0.0 elapsed_ms=0.06
+2026-08-31 12:10:19 INFO     [hip_agents.verify_agent] [verify] compiled=True ran=True status=PASS correct=True speedup=1.017
+2026-08-31 12:10:19 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ verify (4.09s)
+2026-08-31 12:10:19 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ reviewer
+2026-08-31 12:10:40 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:10:40 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (2602 chars)
+2026-08-31 12:11:00 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:11:00 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (2657 chars)
+2026-08-31 12:11:22 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:11:22 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (2715 chars)
+2026-08-31 12:11:22 INFO     [hip_agents.reviewer_agent] [reviewer] issues=0 contradictions=0 rec=SHIP — patch verified correct
+2026-08-31 12:11:22 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ reviewer (63.16s)
+2026-08-31 12:11:22 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ finalize
+2026-08-31 12:11:22 INFO     [hip_orchestrator.graph] [hip-orchestrator] final confidence=0.497 verify_correct=True runtime=ok
+2026-08-31 12:11:22 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ finalize (0.00s)
+2026-08-31 12:11:22 INFO     [hip_orchestrator.graph] [hip-orchestrator] Pipeline completed
+2026-08-31 12:11:22 INFO     [main_hip] Pipeline finished in 127.4s
+2026-08-31 12:11:42 INFO     [main_hip] Kernel  (host):      /workspace/Autonomous-debugging-system/hip_bugs/kernels/gemm_uncoalesced.hip
+2026-08-31 12:11:42 INFO     [main_hip] Kernel  (container): /workspace/Autonomous-debugging-system/hip_bugs/kernels/gemm_uncoalesced.hip
+2026-08-31 12:11:42 INFO     [main_hip] Output  (host):      /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] Starting pipeline for HIP-004
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ preprocess
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ preprocess (0.43s)
+2026-08-31 12:11:42 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ triage
+2026-08-31 12:12:01 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:12:01 INFO     [hip_agents.triage_agent] [triage] LLM ok: bug_class=uncoalesced_access
+2026-08-31 12:12:01 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ triage (19.23s)
+2026-08-31 12:12:01 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ build
+2026-08-31 12:12:01 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/hip_bugs/kernels/gemm_uncoalesced.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoal
+2026-08-31 12:12:04 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/hip_bugs/kernels/gemm_uncoalesced.hip → status=ok warnings=18 errors=0
+2026-08-31 12:12:04 INFO     [hip_agents.build_agent] [build] gemm_uncoalesced status=ok warnings=18 errors=0
+2026-08-31 12:12:04 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ build (2.82s)
+2026-08-31 12:12:04 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ runtime
+2026-08-31 12:12:04 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:05 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:05 INFO     [hip_agents.runtime_agent] [runtime] exit=1 numeric_status=FAIL_NUMERIC correct=False elapsed_ms=0.057
+2026-08-31 12:12:05 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ runtime (1.23s)
+2026-08-31 12:12:05 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ kernel_analyst
+2026-08-31 12:12:05 INFO     [hip_tools.kernel_parser] [kernel_parser] 1 kernels, 2 launches, 0 suspicious patterns
+2026-08-31 12:12:05 INFO     [hip_agents.kernel_analyst] [kernel_analyst] 1 kernels, 0 suspicious patterns, 2 launches
+2026-08-31 12:12:05 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ kernel_analyst (0.00s)
+2026-08-31 12:12:05 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ probe
+2026-08-31 12:12:05 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:07 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:07 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:08 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:08 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:09 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:09 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:10 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:10 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_baseline
+2026-08-31 12:12:12 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=FAIL_NUMERIC correct=False max_err=120.0 elapsed_ms=0.057
+2026-08-31 12:12:12 INFO     [hip_agents.probe_agent] [probe] 5 runs → varied=0/5 statuses={'FAIL_NUMERIC'} elapsed={'min': 0.057, 'max': 0.057, 'mean': 0.057}
+2026-08-31 12:12:12 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ probe (6.21s)
+2026-08-31 12:12:12 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ fix
+2026-08-31 12:12:46 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:12:46 INFO     [hip_agents.fix_agent] [fix] LLM plan ok: bug_type=uncoalesced_access conf=0.98
+2026-08-31 12:12:46 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ fix (34.62s)
+2026-08-31 12:12:46 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ verify
+2026-08-31 12:12:46 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_patched.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/
+2026-08-31 12:12:49 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_patched.hip → status=ok warnings=18 errors=0
+2026-08-31 12:12:49 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-004/gemm_uncoalesced_patched
+2026-08-31 12:12:50 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=sgemm status=PASS correct=True max_err=0.0 elapsed_ms=0.041
+2026-08-31 12:12:50 INFO     [hip_agents.verify_agent] [verify] compiled=True ran=True status=PASS correct=True speedup=1.39
+2026-08-31 12:12:50 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ verify (4.04s)
+2026-08-31 12:12:50 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ reviewer
+2026-08-31 12:13:11 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:13:11 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (2733 chars)
+2026-08-31 12:13:32 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:13:32 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (2772 chars)
+2026-08-31 12:13:52 INFO     [httpx2] HTTP Request: POST http://itokens.sourcefind.cn:10087/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:13:52 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (2736 chars)
+2026-08-31 12:13:52 INFO     [hip_agents.reviewer_agent] [reviewer] issues=0 contradictions=0 rec=SHIP — patch verified correct, 1.39× speedup
+2026-08-31 12:13:52 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ reviewer (61.66s)
+2026-08-31 12:13:52 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ finalize
+2026-08-31 12:13:52 INFO     [hip_orchestrator.graph] [hip-orchestrator] final confidence=1.0 verify_correct=True runtime=error
+2026-08-31 12:13:52 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ finalize (0.00s)
+2026-08-31 12:13:52 INFO     [hip_orchestrator.graph] [hip-orchestrator] Pipeline completed
+2026-08-31 12:13:52 INFO     [main_hip] Pipeline finished in 130.3s
+2026-08-31 12:52:13 INFO     [main_hip] Kernel  (host):      /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip
+2026-08-31 12:52:13 INFO     [main_hip] Kernel  (container): /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip
+2026-08-31 12:52:13 INFO     [main_hip] Output  (host):      /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002
+2026-08-31 12:52:13 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:52:13 INFO     [hip_orchestrator.graph] [hip-orchestrator] Starting pipeline for HIP-002
+2026-08-31 12:52:13 INFO     [hip_orchestrator.graph] ============================================================
+2026-08-31 12:52:13 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ preprocess
+2026-08-31 12:52:14 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ preprocess (0.43s)
+2026-08-31 12:52:14 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ triage
+2026-08-31 12:52:14 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:52:30 INFO     [hip_agents.triage_agent] [triage] LLM ok: bug_class=missing_sync
+2026-08-31 12:52:30 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ triage (15.71s)
+2026-08-31 12:52:30 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ build
+2026-08-31 12:52:30 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_rac
+2026-08-31 12:52:32 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip → status=ok warnings=16 errors=0
+2026-08-31 12:52:32 INFO     [hip_agents.build_agent] [build] reduction_race status=ok warnings=16 errors=0
+2026-08-31 12:52:32 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ build (2.76s)
+2026-08-31 12:52:32 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ runtime
+2026-08-31 12:52:32 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:34 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=17419.625 elapsed_ms=0.842
+2026-08-31 12:52:34 INFO     [hip_agents.runtime_agent] [runtime] exit=1 numeric_status=FAIL_NUMERIC correct=False elapsed_ms=0.842
+2026-08-31 12:52:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ runtime (1.23s)
+2026-08-31 12:52:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ kernel_analyst
+2026-08-31 12:52:34 INFO     [hip_tools.kernel_parser] [kernel_parser] 1 kernels, 1 launches, 0 suspicious patterns
+2026-08-31 12:52:34 INFO     [hip_agents.kernel_analyst] [kernel_analyst] 1 kernels, 0 suspicious patterns, 1 launches
+2026-08-31 12:52:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ kernel_analyst (0.00s)
+2026-08-31 12:52:34 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ probe
+2026-08-31 12:52:34 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:35 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=4352.0 elapsed_ms=0.859
+2026-08-31 12:52:35 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:36 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=5568.0 elapsed_ms=0.857
+2026-08-31 12:52:36 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:37 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=3776.0 elapsed_ms=0.864
+2026-08-31 12:52:37 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:39 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=4800.0 elapsed_ms=0.84
+2026-08-31 12:52:39 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_baseline
+2026-08-31 12:52:40 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=FAIL_NUMERIC correct=False max_err=5312.0 elapsed_ms=0.835
+2026-08-31 12:52:40 INFO     [hip_agents.probe_agent] [probe] 5 runs → varied=4/5 statuses={'FAIL_NUMERIC'} elapsed={'min': 0.835, 'max': 0.864, 'mean': 0.851}
+2026-08-31 12:52:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ probe (6.15s)
+2026-08-31 12:52:40 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ fix
+2026-08-31 12:52:40 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:54:34 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (0 chars)
+2026-08-31 12:54:34 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:56:19 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (0 chars)
+2026-08-31 12:56:19 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:58:03 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (0 chars)
+2026-08-31 12:58:03 WARNING  [hip_agents.fix_agent] [fix] LLM plan invalid or missing patched_kernel_source — falling back
+2026-08-31 12:58:03 INFO     [hip_agents.fix_agent] [fix] heuristic plan for bug_class=missing_sync
+2026-08-31 12:58:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ fix (322.76s)
+2026-08-31 12:58:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ verify
+2026-08-31 12:58:03 INFO     [hip_tools.docker_runner] [docker_runner] exec: hipcc -O2 -std=c++17  /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched.hip -o /workspace/Autonomous-debugging-system/outputs/hip_reports/HI
+2026-08-31 12:58:05 INFO     [hip_tools.hipcc_wrapper] [hipcc] /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched.hip → status=ok warnings=18 errors=0
+2026-08-31 12:58:05 INFO     [hip_tools.docker_runner] [docker_runner] exec: /workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched
+2026-08-31 12:58:07 INFO     [hip_tools.numeric_validator] [numeric_validator] problem=reduce_sum status=PASS correct=True max_err=0.0 elapsed_ms=0.842
+2026-08-31 12:58:07 INFO     [hip_agents.verify_agent] [verify] compiled=True ran=True status=PASS correct=True speedup=1.0
+2026-08-31 12:58:07 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ verify (3.99s)
+2026-08-31 12:58:07 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ reviewer
+2026-08-31 12:58:07 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:58:25 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 1: non-JSON response (0 chars)
+2026-08-31 12:58:25 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:58:44 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 2: non-JSON response (0 chars)
+2026-08-31 12:58:44 INFO     [httpx2] HTTP Request: POST https://api.deepseek.com/anthropic/v1/messages "HTTP/1.1 200 OK"
+2026-08-31 12:59:03 WARNING  [hip_tools.anthropic_client] [anthropic_client] attempt 3: non-JSON response (0 chars)
+2026-08-31 12:59:03 INFO     [hip_agents.reviewer_agent] [reviewer] issues=0 contradictions=0 rec=SHIP — patch verified correct
+2026-08-31 12:59:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ reviewer (56.12s)
+2026-08-31 12:59:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] ▶ finalize
+2026-08-31 12:59:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] final confidence=0.996 verify_correct=True runtime=error
+2026-08-31 12:59:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] ✔ finalize (0.00s)
+2026-08-31 12:59:03 INFO     [hip_orchestrator.graph] [hip-orchestrator] Pipeline completed
+2026-08-31 12:59:03 INFO     [main_hip] Pipeline finished in 409.2s

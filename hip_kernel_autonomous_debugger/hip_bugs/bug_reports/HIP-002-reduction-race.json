@@ -1,0 +1,20 @@
+{
+  "id": "HIP-002",
+  "title": "reduce_sum returns wrong / non-deterministic totals",
+  "severity": "HIGH",
+  "component": "hip_bugs/kernels/reduction_race.hip",
+  "environment": {
+    "gpu": "hygon DCU BW151",
+    "wavefront_size": 64,
+    "block_size": 256,
+    "problem_size": "N = 1<<20 = 1048576"
+  },
+  "description": "Block-level tree reduction sums an array of 1.0f values and should return 1048576.0. GPU returns values below this (often 4096 * blocks * varying fraction) and results vary from run to run when the block finishes at different offsets. Suspect a synchronization issue between the halving rounds.",
+  "expected_behavior": "STATUS: PASS with GPU sum equal to CPU reference (max_abs_err < 0.5).",
+  "actual_behavior": "STATUS: FAIL_NUMERIC — GPU_RESULT samples diverge from CPU_REFERENCE by hundreds to thousands, and different runs give different sums (RUN_SPREAD non-zero).",
+  "reproduction_hints": [
+    "The kernel writes to shared memory then loops without __syncthreads() between rounds.",
+    "Between shared memory writes and reads by other threads, a __syncthreads() barrier is mandatory on hygon DCU (wave = 64, block = 256 spans 4 waves).",
+    "Fix candidate: add __syncthreads() before and inside the reduction loop."
+  ]
+}

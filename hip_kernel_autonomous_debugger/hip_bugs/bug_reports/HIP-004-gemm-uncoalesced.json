@@ -1,0 +1,18 @@
+{
+  "id": "HIP-004",
+  "title": "sgemm_naive returns wrong C matrix — indexing looks off",
+  "severity": "HIGH",
+  "component": "hip_bugs/kernels/gemm_uncoalesced.hip",
+  "environment": {
+    "gpu": "hygon DCU BW151",
+    "problem_size": "M=N=K=256, row-major matrices"
+  },
+  "description": "SGEMM kernel produces C values that don't match the CPU reference on any element. GPU_RESULT does not resemble a plausible product of A and B for the first row/column. All matrices are row-major. Suspect an index-arithmetic bug in the A access.",
+  "expected_behavior": "STATUS: PASS with max_abs_err ~= 0 (integer inputs, exact fp32 sums).",
+  "actual_behavior": "STATUS: FAIL_NUMERIC with max_abs_err in the thousands — every element wrong.",
+  "reproduction_hints": [
+    "A is declared as MxK row-major on the host; CPU reference uses `A[m*K + k]`.",
+    "GPU kernel accesses A as `A[k * M + row]`, which is column-major indexing.",
+    "Fix candidate: change `A[k*M + row]` to `A[row*K + k]` — this both restores correctness and makes the access coalesced across threadIdx.x (row) neighbors."
+  ]
+}

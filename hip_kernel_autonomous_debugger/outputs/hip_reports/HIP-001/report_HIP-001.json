@@ -1,0 +1,280 @@
+{
+  "bug_summary": {
+    "id": "HIP-001",
+    "title": "vector_add kernel produces wrong result / HIP illegal address for aligned N",
+    "severity": "high",
+    "bug_class": "out_of_bounds",
+    "component": "hip_bugs/kernels/vector_add_oob.hip",
+    "environment": {
+      "gpu": "hygon DCU BW151",
+      "toolchain": "hipcc 25.10.0 / DTK 26.04",
+      "problem_size": "N = 1<<18 = 262144"
+    }
+  },
+  "evidence": {
+    "build": {
+      "status": "ok",
+      "warning_count": 19,
+      "error_count": 0,
+      "warnings_head": [
+        {
+          "kind": "warning",
+          "file": "/root/custom.bashrc\nNow using node v12.18.3 (npm v6.14.6)\n\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip",
+          "line": 34,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip",
+          "line": 34,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip",
+          "line": 34,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip",
+          "line": 99,
+          "col": 5,
+          "message": "ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]"
+        },
+        {
+          "kind": "warning",
+          "file": "/workspace/Autonomous-debugging-system/hip_bugs/kernels/vector_add_oob.hip",
+          "line": 99,
+          "col": 18,
+          "message": "ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]"
+        }
+      ],
+      "errors_head": []
+    },
+    "runtime": {
+      "status": "error",
+      "exit_code": -11,
+      "duration_s": 2.243,
+      "numeric_status": "FAIL_RUNTIME",
+      "correct": false,
+      "max_abs_err": null,
+      "elapsed_ms": null,
+      "gpu_sample": [],
+      "cpu_sample": [],
+      "hip_err": "hipErrorIllegalAddress (VMFault detected)",
+      "stderr_tail": "x7f9ea566c840\nHOSTQUEUE <0x1201120>: device id: 0\n\nHOSTQUEUE <0x1201120>: >>>>>>>> FIND MATCH KERNEL DETAILS <<<<<<<<<\nHOSTQUEUE <0x1201120>: kernel name: _Z10vector_addPKfS0_Pfi\nHOSTQUEUE <0x1201120>: >>>>>>>> DUMP KERNEL ARGS: size: 288 <<<<<<<<<\n\n00 00 20 98 9e 7f 00 00 00 00 30 98 9e 7f 00 00 \n00 00 e0 74 96 7f 00 00 00 00 04 00 00 00 00 00 \n00 04 00 00 01 00 00 00 01 00 00 00 00 01 01 00 \n01 "
+    },
+    "static_analysis": {
+      "kernels": [
+        {
+          "name": "vector_add",
+          "start_line": 26,
+          "has_syncthreads": false,
+          "has_atomics": false
+        }
+      ],
+      "suspicious_patterns": [
+        {
+          "kind": "loop_le_bound",
+          "line": 31,
+          "bound_var": "N",
+          "snippet": "for (int i = tid; i <= N; i += stride)",
+          "concern": "Loop uses <= against a size variable \u2014 likely off-by-one / OOB when accessing arr[i].",
+          "kernel": "vector_add"
+        }
+      ],
+      "launches": [
+        {
+          "kernel": "vector_add",
+          "grid": "grid",
+          "block": "block",
+          "smem": "",
+          "line": 58
+        }
+      ]
+    },
+    "probe": {
+      "runs": 5,
+      "samples": [
+        {
+          "run": 0,
+          "status": "UNKNOWN",
+          "gpu_sample": [],
+          "max_abs_err": null,
+          "elapsed_ms": null,
+          "hip_err": "NONE",
+          "exit_code": -11
+        },
+        {
+          "run": 1,
+          "status": "UNKNOWN",
+          "gpu_sample": [],
+          "max_abs_err": null,
+          "elapsed_ms": null,
+          "hip_err": "NONE",
+          "exit_code": -11
+        },
+        {
+          "run": 2,
+          "status": "UNKNOWN",
+          "gpu_sample": [],
+          "max_abs_err": null,
+          "elapsed_ms": null,
+          "hip_err": "NONE",
+          "exit_code": -11
+        },
+        {
+          "run": 3,
+          "status": "UNKNOWN",
+          "gpu_sample": [],
+          "max_abs_err": null,
+          "elapsed_ms": null,
+          "hip_err": "NONE",
+          "exit_code": -11
+        },
+        {
+          "run": 4,
+          "status": "UNKNOWN",
+          "gpu_sample": [],
+          "max_abs_err": null,
+          "elapsed_ms": null,
+          "hip_err": "NONE",
+          "exit_code": -11
+        }
+      ],
+      "distinct_statuses": [
+        "UNKNOWN"
+      ],
+      "run_to_run_variation": 0,
+      "nondeterministic": false,
+      "elapsed_ms_stats": {}
+    }
+  },
+  "root_cause": {
+    "hypothesis": "The grid-stride loop bound `i <= N` causes an out-of-bounds read of a[N]/b[N] and write to c[N], one element past the allocated buffers of size N*sizeof(float).",
+    "mechanism": "Buffers da/db/dc are allocated with N*sizeof(float) bytes, so valid indices are 0..N-1. The kernel loops `for (int i = tid; i <= N; i += stride)`, so at least one thread executes with i==N and performs `c[N] = a[N] + b[N]`. Depending on whether the memory page just past the allocation is mapped and readable, this either returns garbage (producing FAIL_NUMERIC where c[0] is overwritten by a stride-winner thread whose i==N wraps into observed elements, or shows nonzero max_abs_err at boundary) or triggers hipErrorIllegalAddress on the next hipDeviceSynchronize().",
+    "confidence": 0.99,
+    "bug_type": "out_of_bounds",
+    "affected_lines": [
+      33,
+      34
+    ]
+  },
+  "patch_plan": {
+    "summary": "Change the grid-stride loop bound from `i <= N` to `i < N`.",
+    "diff": "@@ __global__ void vector_add ...\n-    for (int i = tid; i <= N; i += stride) {\n+    for (int i = tid; i < N; i += stride) {\n         c[i] = a[i] + b[i];\n     }",
+    "risks": [
+      "None \u2014 the fix restricts iteration to valid indices only; all N elements are still computed because tid ranges cover [0,N)."
+    ],
+    "expected_effect": "STATUS: PASS with MAX_ABS_ERR < 1e-4 and no hipErrorIllegalAddress.",
+    "validation_steps": [
+      "recompile with `hipcc -O2 -std=c++17`",
+      "rerun the binary",
+      "check STATUS: PASS and MAX_ABS_ERR near 0"
+    ]
+  },
+  "verification": {
+    "ran": true,
+    "compiled": true,
+    "exit_code": 0,
+    "status": "PASS",
+    "hip_err": "NONE",
+    "numerically_correct": true,
+    "max_abs_err": 0.0,
+    "gpu_sample": [
+      524.288,
+      524.287,
+      524.286,
+      524.285,
+      524.284,
+      524.283,
+      524.282,
+      524.281
+    ],
+    "cpu_sample": [
+      524.288,
+      524.287,
+      524.286,
+      524.285,
+      524.284,
+      524.283,
+      524.282,
+      524.281
+    ],
+    "patched_elapsed_ms": 0.517,
+    "baseline_elapsed_ms": null,
+    "speedup": null,
+    "patched_source_file": "/workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_patched.hip",
+    "patched_binary_container": "/workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-001/vector_add_oob_patched",
+    "stdout_tail": "/root/custom.bashrc\nNow using node v12.18.3 (npm v6.14.6)\nPROBLEM: vector_add\nN: 262144\nELAPSED_MS: 0.517\nHIP_ERR: NONE\nMAX_ABS_ERR: 0.000000e+00\nGPU_RESULT: 524.288 524.287 524.286 524.285 524.284 524.283 524.282 524.281\nCPU_REFERENCE: 524.288 524.287 524.286 524.285 524.284 524.283 524.282 524.281\nSTATUS: PASS\n",
+    "stderr_tail": ""
+  },
+  "review": {
+    "issues": [],
+    "contradictions": [],
+    "llm_review": {},
+    "recommendation": "SHIP \u2014 patch verified correct"
+  },
+  "metadata": {
+    "pipeline_confidence": 1.0,
+    "llm_used": true,
+    "agent_trace": [
+      {
+        "agent": "preprocess",
+        "status": "success",
+        "duration_s": 0.491
+      },
+      {
+        "agent": "triage",
+        "status": "success",
+        "duration_s": 15.641
+      },
+      {
+        "agent": "build",
+        "status": "success",
+        "duration_s": 3.0
+      },
+      {
+        "agent": "runtime",
+        "status": "success",
+        "duration_s": 2.243
+      },
+      {
+        "agent": "kernel_analyst",
+        "status": "success",
+        "duration_s": 0.001
+      },
+      {
+        "agent": "probe",
+        "status": "success",
+        "duration_s": 10.835
+      },
+      {
+        "agent": "fix",
+        "status": "success",
+        "duration_s": 37.41
+      },
+      {
+        "agent": "verify",
+        "status": "success",
+        "duration_s": 4.042
+      },
+      {
+        "agent": "reviewer",
+        "status": "success",
+        "duration_s": 60.143
+      },
+      {
+        "agent": "finalize",
+        "status": "success",
+        "duration_s": 0.0
+      }
+    ],
+    "errors": [],
+    "generated_at": "2026-08-31T03:33:35Z"
+  }
+}

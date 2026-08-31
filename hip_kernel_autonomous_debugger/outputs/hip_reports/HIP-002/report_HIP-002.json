@@ -1,0 +1,295 @@
+{
+  "bug_summary": {
+    "id": "HIP-002",
+    "title": "reduce_sum returns wrong / non-deterministic totals",
+    "severity": "high",
+    "bug_class": "missing_sync",
+    "component": "hip_bugs/kernels/reduction_race.hip",
+    "environment": {
+      "gpu": "hygon DCU BW151",
+      "wavefront_size": 64,
+      "block_size": 256,
+      "problem_size": "N = 1<<20 = 1048576"
+    }
+  },
+  "evidence": {
+    "build": {
+      "status": "ok",
+      "warning_count": 16,
+      "error_count": 0,
+      "warnings_head": [
+        {
+          "kind": "warning",
+          "file": "/root/custom.bashrc\nNow using node v12.18.3 (npm v6.14.6)\n\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip",
+          "line": 44,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip",
+          "line": 44,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip",
+          "line": 44,
+          "col": 1,
+          "message": "void function is missing a return statement [-Wreturn-type]"
+        },
+        {
+          "kind": "warning",
+          "file": "}\n^\n/workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip",
+          "line": 87,
+          "col": 5,
+          "message": "ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]"
+        },
+        {
+          "kind": "warning",
+          "file": "/workspace/Autonomous-debugging-system/hip_bugs/kernels/reduction_race.hip",
+          "line": 87,
+          "col": 18,
+          "message": "ignoring return value of function declared with 'nodiscard' attribute [-Wunused-result]"
+        }
+      ],
+      "errors_head": []
+    },
+    "runtime": {
+      "status": "error",
+      "exit_code": 1,
+      "duration_s": 1.229,
+      "numeric_status": "FAIL_NUMERIC",
+      "correct": false,
+      "max_abs_err": 17419.625,
+      "elapsed_ms": 0.842,
+      "gpu_sample": [
+        1031156.4,
+        1045504.0,
+        1045184.0,
+        1045376.0,
+        1045248.0
+      ],
+      "cpu_sample": [
+        1048576.0
+      ],
+      "hip_err": "NONE",
+      "stderr_tail": ""
+    },
+    "static_analysis": {
+      "kernels": [
+        {
+          "name": "reduce_sum",
+          "start_line": 28,
+          "has_syncthreads": true,
+          "has_atomics": true
+        }
+      ],
+      "suspicious_patterns": [],
+      "launches": [
+        {
+          "kernel": "reduce_sum",
+          "grid": "grid",
+          "block": "block",
+          "smem": "",
+          "line": 66
+        }
+      ]
+    },
+    "probe": {
+      "runs": 5,
+      "samples": [
+        {
+          "run": 0,
+          "status": "FAIL_NUMERIC",
+          "gpu_sample": [
+            1044224.0,
+            1045440.0,
+            1044480.0,
+            1044544.0
+          ],
+          "max_abs_err": 4352.0,
+          "elapsed_ms": 0.859,
+          "hip_err": "NONE",
+          "exit_code": 1
+        },
+        {
+          "run": 1,
+          "status": "FAIL_NUMERIC",
+          "gpu_sample": [
+            1043008.0,
+            1045376.0,
+            1044608.0,
+            1044544.0
+          ],
+          "max_abs_err": 5568.0,
+          "elapsed_ms": 0.857,
+          "hip_err": "NONE",
+          "exit_code": 1
+        },
+        {
+          "run": 2,
+          "status": "FAIL_NUMERIC",
+          "gpu_sample": [
+            1045248.0,
+            1044800.0,
+            1045312.0,
+            1045376.0
+          ],
+          "max_abs_err": 3776.0,
+          "elapsed_ms": 0.864,
+          "hip_err": "NONE",
+          "exit_code": 1
+        },
+        {
+          "run": 3,
+          "status": "FAIL_NUMERIC",
+          "gpu_sample": [
+            1043776.0,
+            1044672.0,
+            1045696.0,
+            1045184.0
+          ],
+          "max_abs_err": 4800.0,
+          "elapsed_ms": 0.84,
+          "hip_err": "NONE",
+          "exit_code": 1
+        },
+        {
+          "run": 4,
+          "status": "FAIL_NUMERIC",
+          "gpu_sample": [
+            1043264.0,
+            1045696.0,
+            1044672.0,
+            1045696.0
+          ],
+          "max_abs_err": 5312.0,
+          "elapsed_ms": 0.835,
+          "hip_err": "NONE",
+          "exit_code": 1
+        }
+      ],
+      "distinct_statuses": [
+        "FAIL_NUMERIC"
+      ],
+      "run_to_run_variation": 4,
+      "nondeterministic": true,
+      "elapsed_ms_stats": {
+        "min": 0.835,
+        "max": 0.864,
+        "mean": 0.851
+      }
+    }
+  },
+  "root_cause": {
+    "hypothesis": "Tree reduction has no __syncthreads() between halving rounds.",
+    "mechanism": "Threads in different waves (block=256 spans 4 waves on DCU) read stale sdata values before writes from the previous stride are visible, yielding systematically low and non-deterministic sums.",
+    "confidence": 0.92,
+    "bug_type": "reduction_race",
+    "affected_lines": [],
+    "_source": "heuristic"
+  },
+  "patch_plan": {
+    "summary": "Add __syncthreads() after the initial shared-mem load and at the top of each reduction round.",
+    "diff": "  sdata[tid] = ...;\n+ __syncthreads();\n  for (int stride = ...; ...) {\n+   __syncthreads();\n    if (tid < stride) sdata[tid] += sdata[tid+stride];\n  }",
+    "risks": [
+      "Heuristic template \u2014 verify with recompile/rerun"
+    ],
+    "expected_effect": "STATUS: PASS with sum == N for every run; RUN_SPREAD delta = 0.",
+    "validation_steps": [
+      "rerun 5 times and confirm identical sums"
+    ]
+  },
+  "verification": {
+    "ran": true,
+    "compiled": true,
+    "exit_code": 0,
+    "status": "PASS",
+    "hip_err": "NONE",
+    "numerically_correct": true,
+    "max_abs_err": 0.0,
+    "gpu_sample": [
+      1048576.0,
+      1048576.0,
+      1048576.0,
+      1048576.0,
+      1048576.0
+    ],
+    "cpu_sample": [
+      1048576.0
+    ],
+    "patched_elapsed_ms": 0.842,
+    "baseline_elapsed_ms": 0.842,
+    "speedup": 1.0,
+    "patched_source_file": "/workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched.hip",
+    "patched_binary_container": "/workspace/Autonomous-debugging-system/outputs/hip_reports/HIP-002/reduction_race_patched",
+    "stdout_tail": "/root/custom.bashrc\nNow using node v12.18.3 (npm v6.14.6)\nPROBLEM: reduce_sum\nN: 1048576\nELAPSED_MS: 0.842\nHIP_ERR: NONE\nGPU_RESULT: 1048576.0 1048576.0 1048576.0 1048576.0 1048576.0\nCPU_REFERENCE: 1048576.0\nRUN_SPREAD: min=1048576.0 max=1048576.0 delta=0.0\nMAX_ABS_ERR: 0.000\nSTATUS: PASS\n",
+    "stderr_tail": ""
+  },
+  "review": {
+    "issues": [],
+    "contradictions": [],
+    "llm_review": {},
+    "recommendation": "SHIP \u2014 patch verified correct"
+  },
+  "metadata": {
+    "pipeline_confidence": 0.996,
+    "llm_used": true,
+    "agent_trace": [
+      {
+        "agent": "preprocess",
+        "status": "success",
+        "duration_s": 0.429
+      },
+      {
+        "agent": "triage",
+        "status": "success",
+        "duration_s": 15.706
+      },
+      {
+        "agent": "build",
+        "status": "success",
+        "duration_s": 2.76
+      },
+      {
+        "agent": "runtime",
+        "status": "success",
+        "duration_s": 1.229
+      },
+      {
+        "agent": "kernel_analyst",
+        "status": "success",
+        "duration_s": 0.001
+      },
+      {
+        "agent": "probe",
+        "status": "success",
+        "duration_s": 6.146
+      },
+      {
+        "agent": "fix",
+        "status": "success",
+        "duration_s": 322.76
+      },
+      {
+        "agent": "verify",
+        "status": "success",
+        "duration_s": 3.989
+      },
+      {
+        "agent": "reviewer",
+        "status": "success",
+        "duration_s": 56.119
+      },
+      {
+        "agent": "finalize",
+        "status": "success",
+        "duration_s": 0.0
+      }
+    ],
+    "errors": [],
+    "generated_at": "2026-08-31T04:59:03Z"
+  }
+}

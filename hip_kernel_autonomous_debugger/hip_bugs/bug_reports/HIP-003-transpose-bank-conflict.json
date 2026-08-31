@@ -1,0 +1,22 @@
+{
+  "id": "HIP-003",
+  "title": "transpose kernel is 2-3× slower than expected on BW151",
+  "severity": "MEDIUM",
+  "bug_class": "performance",
+  "component": "hip_bugs/kernels/transpose_bank_conflict.hip",
+  "environment": {
+    "gpu": "hygon DCU BW151",
+    "lds_banks": 32,
+    "lds_bank_width_bytes": 4,
+    "tile_size": "32×32",
+    "problem_size": "W=H=2048"
+  },
+  "description": "Tiled transpose kernel produces correct output but runs 2-3× slower than the vendor sample on identical matrix size. Profiling with rocprof is unavailable but the correctness path passes. Suspect LDS bank conflicts on the column-major read of the shared tile.",
+  "expected_behavior": "STATUS: PASS AND kernel completes within ~0.5 ms per iteration on 2048×2048.",
+  "actual_behavior": "STATUS: PASS but ELAPSED_MS is 1.2–1.5 ms per iteration.",
+  "reproduction_hints": [
+    "Shared memory tile is declared as `__shared__ float tile[32][32]`.",
+    "hygon DCU LDS has 32 banks × 4 bytes; column access `tile[x][y]` for y in 0..31 hits the same bank 32 times.",
+    "Fix candidate: pad the second dimension to 33 (`tile[32][33]`)."
+  ]
+}
